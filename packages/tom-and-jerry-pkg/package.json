@@ -1,0 +1,38 @@
+{
+  "name": "tom-and-jerry",
+  "version": "0.1.0",
+  "description": "Two agents. Separate machines. One command to wire them.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nicolasmauro/tom-and-jerry"
+  },
+  "bin": {
+    "tj": "bin/tj.js"
+  },
+  "files": [
+    "bin"
+  ],
+  "keywords": [
+    "ai",
+    "agents",
+    "multi-machine",
+    "orchestrator",
+    "executor",
+    "wake-on-lan",
+    "tailscale",
+    "openclaw",
+    "cli"
+  ],
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "dependencies": {
+    "@tom-and-jerry/cli": "workspace:*",
+    "@tom-and-jerry/core": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
