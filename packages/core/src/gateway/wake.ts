@@ -119,23 +119,40 @@ export async function wakeAgent(opts: WakeOptions): Promise<WakeResult> {
         const payload = msg["payload"] as Record<string, unknown> | undefined;
         const ok = msg["ok"] as boolean;
 
-        // Step 2: hello-ok → send the wake
+        // Step 2: hello-ok → send the wake, tracking its request id.
+        // GLaDOS review (2026-03-11): don't resolve on any res — track the
+        // wake request id specifically so we don't exit early if the gateway
+        // emits other replies between connect and the wake acknowledgement.
         if (ok && payload?.["type"] === "hello-ok") {
+          const wakeReqId = String(reqId++);
           ws.send(
             JSON.stringify({
               type: "req",
-              id: String(reqId++),
+              id: wakeReqId,
               method: "wake",
               params: { text, mode },
             }),
           );
+          // Swap to a targeted handler for the wake response
+          const origOnMessage = ws.listeners("message").pop() as ((raw: Buffer) => void) | undefined;
+          if (origOnMessage) ws.off("message", origOnMessage);
+          ws.on("message", (raw2: Buffer) => {
+            let reply: Record<string, unknown>;
+            try { reply = JSON.parse(raw2.toString()); } catch { return; }
+            if (reply["type"] === "res" && reply["id"] === wakeReqId) {
+              if (reply["ok"]) {
+                finish({ ok: true });
+              } else {
+                const err = reply["error"] as Record<string, string> | undefined;
+                finish({ ok: false, error: err?.["message"] ?? "wake failed" });
+              }
+            }
+          });
           return;
         }
 
-        // Step 3: wake response
-        if (ok) {
-          finish({ ok: true });
-        } else {
+        // Step 3: any other error response before wake
+        if (!ok) {
           const err = msg["error"] as Record<string, string> | undefined;
           finish({ ok: false, error: err?.["message"] ?? "unknown error" });
         }

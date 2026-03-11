@@ -47,8 +47,10 @@ export interface ProxyConfig {
  */
 export function buildSocatCommand(config: ProxyConfig): string {
   const port = config.port ?? 18789;
+  // GLaDOS review (2026-03-11): systemd user units don't inherit PATH,
+  // so "socat" without an absolute path fails silently. Always use full path.
   return [
-    "socat",
+    "/usr/bin/socat",
     `TCP-LISTEN:${port},bind=${config.tailscaleIP},reuseaddr,fork`,
     `TCP:127.0.0.1:${port}`,
   ].join(" ");

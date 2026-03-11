@@ -35,7 +35,8 @@ export async function pingPeer(
   timeoutMs = 5000,
 ): Promise<boolean> {
   try {
-    const { stdout } = await execFileAsync("tailscale", ["ping", "--c", "1", "--timeout", `${Math.ceil(timeoutMs / 1000)}s`, ip]);
+    // Note: tailscale ping uses -c (single dash), not --c. GLaDOS caught this in review 2026-03-11.
+    const { stdout } = await execFileAsync("tailscale", ["ping", "-c", "1", "--timeout", `${Math.ceil(timeoutMs / 1000)}s`, ip]);
     return stdout.includes("pong");
   } catch {
     return false;
