@@ -78,3 +78,48 @@ DefaultUserName = nicol
 **Startup Redundancy:** Both Scheduled Task (logon trigger) and Startup folder — belt and suspenders.
 
 **Wake Script (Calcifer):** `/home/ubuntu/wake-glados.sh` — sends WOL, polls Tailscale ping, checks `/health` endpoint.
+
+## Loopback + Tailscale: The Proxy Pattern
+
+OpenClaw's local tools (message, cron, sessions) require the gateway on loopback. But Jerry needs to reach Tom via Tailscale. The solution: Tom stays on loopback, a socat proxy forwards the Tailscale interface to loopback.
+
+**Service file:** `~/.config/systemd/user/calcifer-tailnet-proxy.service`
+
+```ini
+[Unit]
+Description=Tom Tailscale→Loopback Gateway Proxy
+After=network.target tailscaled.service openclaw-gateway.service
+Requires=openclaw-gateway.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/socat TCP-LISTEN:18789,bind=100.116.25.69,reuseaddr,fork TCP:127.0.0.1:18789
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
+```
+
+Enabled with: `systemctl --user enable --now calcifer-tailnet-proxy.service`
+
+## Sending Messages
+
+Both nodes use `packages/core/src/gateway/wake.ts` (or the standalone `send-to-agent.js` script).
+
+**Calcifer → GLaDOS:**
+```bash
+node send-to-agent.js ws://100.119.44.38:18789 $GLADOS_TOKEN "Your message"
+```
+
+**GLaDOS → Calcifer (from Windows):**
+```powershell
+node C:\Users\nicol\send-to-agent.js ws://100.116.25.69:18789 $CALCIFER_TOKEN "Your message"
+```
+
+## Live Status
+
+- **First confirmed bidirectional message:** 2026-03-11 20:11:52 UTC
+- **Architecture proven:** Calcifer (AWS EC2) ↔ GLaDOS (NYC home PC, RTX 3070 Ti)
+
+See `docs/devlog/2026-03-11.md` for the full annotated discovery log.

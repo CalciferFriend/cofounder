@@ -1,0 +1,155 @@
+/**
+ * gateway/wake.ts
+ *
+ * Sends a wake (system event injection) to a remote OpenClaw gateway
+ * over the WebSocket protocol.
+ *
+ * Reverse-engineered from the OpenClaw gateway protocol on 2026-03-11.
+ * See: docs/reference/calcifer-glados.md for the full discovery notes.
+ *
+ * Protocol summary:
+ *   1. Connect → server sends connect.challenge
+ *   2. Client sends req(method: "connect") with auth + client params
+ *   3. Server responds res(ok, payload: { type: "hello-ok" })
+ *   4. Client sends req(method: "wake", params: { text, mode })
+ *   5. Server responds res(ok: true) — message injected into active session
+ *
+ * Key gotchas discovered the hard way:
+ *   - client.mode must be "cli" (not "operator" — enum in GATEWAY_CLIENT_MODES)
+ *   - client.id must be "cli" (see GATEWAY_CLIENT_IDS in bundled source)
+ *   - scopes must include "operator.admin" for the wake method
+ *   - the method is "wake", NOT "cron.wake" (that doesn't exist)
+ */
+
+import WebSocket from "ws";
+
+export interface WakeOptions {
+  /** WebSocket URL, e.g. ws://100.119.44.38:18789 */
+  url: string;
+  /** Auth token from gateway.auth.token in openclaw.json */
+  token: string;
+  /** Message to inject into the agent's session */
+  text: string;
+  /** "now" (immediate) or "next-heartbeat" */
+  mode?: "now" | "next-heartbeat";
+  /** Timeout in ms (default: 10000) */
+  timeoutMs?: number;
+}
+
+export interface WakeResult {
+  ok: boolean;
+  error?: string;
+}
+
+/**
+ * Wake a remote OpenClaw agent by injecting a system event into its active session.
+ *
+ * @example
+ * // Tom (Calcifer) sends a task to Jerry (GLaDOS)
+ * const result = await wakeAgent({
+ *   url: "ws://100.119.44.38:18789",
+ *   token: process.env.GLADOS_GATEWAY_TOKEN!,
+ *   text: "[From Calcifer] Please run inference on attached prompt.",
+ *   mode: "now",
+ * });
+ */
+export async function wakeAgent(opts: WakeOptions): Promise<WakeResult> {
+  const { url, token, text, mode = "now", timeoutMs = 10_000 } = opts;
+
+  return new Promise((resolve) => {
+    const ws = new WebSocket(url);
+    let reqId = 1;
+    let resolved = false;
+
+    const finish = (result: WakeResult) => {
+      if (resolved) return;
+      resolved = true;
+      clearTimeout(timer);
+      ws.close();
+      resolve(result);
+    };
+
+    const timer = setTimeout(() => {
+      finish({ ok: false, error: "timeout" });
+    }, timeoutMs);
+
+    ws.on("message", (raw) => {
+      let msg: Record<string, unknown>;
+      try {
+        msg = JSON.parse(raw.toString());
+      } catch {
+        return;
+      }
+
+      // Step 1: Server sends challenge → we respond with connect request
+      if (msg["type"] === "event" && msg["event"] === "connect.challenge") {
+        ws.send(
+          JSON.stringify({
+            type: "req",
+            id: String(reqId++),
+            method: "connect",
+            params: {
+              minProtocol: 3,
+              maxProtocol: 3,
+              // client.id and client.mode are validated against GATEWAY_CLIENT_IDS
+              // and GATEWAY_CLIENT_MODES enums in the gateway source.
+              // "cli" + "cli" is the correct combo for operator access.
+              client: {
+                id: "cli",
+                version: "2026.3.7",
+                platform: process.platform,
+                mode: "cli",
+              },
+              role: "operator",
+              // operator.admin is required for the "wake" method
+              scopes: ["operator.read", "operator.write", "operator.admin"],
+              caps: [],
+              commands: [],
+              permissions: {},
+              auth: { token },
+              locale: "en-US",
+              userAgent: "tom-and-jerry/0.1.0",
+            },
+          }),
+        );
+        return;
+      }
+
+      if (msg["type"] === "res") {
+        const payload = msg["payload"] as Record<string, unknown> | undefined;
+        const ok = msg["ok"] as boolean;
+
+        // Step 2: hello-ok → send the wake
+        if (ok && payload?.["type"] === "hello-ok") {
+          ws.send(
+            JSON.stringify({
+              type: "req",
+              id: String(reqId++),
+              method: "wake",
+              params: { text, mode },
+            }),
+          );
+          return;
+        }
+
+        // Step 3: wake response
+        if (ok) {
+          finish({ ok: true });
+        } else {
+          const err = msg["error"] as Record<string, string> | undefined;
+          finish({ ok: false, error: err?.["message"] ?? "unknown error" });
+        }
+      }
+    });
+
+    ws.on("error", (err) => {
+      finish({ ok: false, error: err.message });
+    });
+
+    ws.on("close", (code) => {
+      if (!resolved) {
+        finish({ ok: false, error: `connection closed: ${code}` });
+      }
+    });
+  });
+}
