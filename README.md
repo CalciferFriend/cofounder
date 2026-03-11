@@ -18,20 +18,21 @@ Tom can't catch Jerry but can't function without him. Jerry runs fast, disappear
 ## Quickstart
 
 ```bash
-# Install globally
-npm install -g tom-and-jerry
-
-# On the first machine (Tom — orchestrator)
-tj onboard
-
-# On the second machine (Jerry — executor)
-tj pair --code <6-digit-code>
+npx tom-and-jerry
 ```
 
-Or run without installing:
+Run that on each machine. The wizard handles everything — role selection, model provider, Tailscale pairing, Wake-on-LAN, gateway config, Windows AutoLogin, startup scripts. Under 10 minutes from zero to two agents talking.
+
+**Requirements:** Node ≥ 22, [Tailscale](https://tailscale.com) installed on both machines, [OpenClaw](https://github.com/openclaw/openclaw) installed on both machines.
+
+Or install globally:
 
 ```bash
-npx tj onboard
+npm install -g tom-and-jerry
+tj          # wizard on first run, status thereafter
+tj onboard  # explicit wizard
+tj status   # show both nodes + connectivity
+tj send "generate a hero image for the landing page"
 ```
 
 ## What the wizard does
