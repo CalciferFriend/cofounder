@@ -1,32 +1,56 @@
 /**
  * gateway/proxy.ts
  *
- * Tailscale→Loopback TCP proxy for Tom nodes.
+ * Tailscale↔Loopback TCP proxy helpers for Tom (Linux) and Jerry (Windows).
  *
- * Problem: OpenClaw's local tools (message, cron, sessions) expect the gateway
- * on loopback (127.0.0.1:18789). But Jerry needs to reach Tom via Tom's
- * Tailscale IP. Binding Tom's gateway to tailscale breaks local tools.
+ * ## The Problem
  *
- * Solution: Keep Tom's gateway on loopback. Run a socat proxy that forwards
- * Tom's Tailscale IP:18789 → 127.0.0.1:18789.
+ * OpenClaw's local tools (message, cron, sessions) expect the gateway on
+ * loopback (127.0.0.1:18789). But the peer agent needs to reach this node
+ * via its Tailscale IP. You can't bind the gateway to both at once.
  *
- * Architecture:
+ * ## Solutions by role
  *
- *   GLaDOS (Jerry)                              Calcifer (Tom)
- *   ──────────────                              ──────────────
- *   send-to-agent.js                            socat proxy
- *   ws://100.116.25.69:18789 ─── Tailscale ──► :18789 (Tailscale IF)
- *                                                   │
- *                                               forwards to
- *                                                   │
- *                                              127.0.0.1:18789
- *                                              (OpenClaw gateway)
+ * ### Tom (Linux) — gateway binds to loopback, proxy exposes Tailscale
  *
- * The systemd user service that runs this:
- *   ~/.config/systemd/user/calcifer-tailnet-proxy.service
+ *   Keep Tom's gateway on loopback. Run a socat proxy that listens on the
+ *   Tailscale interface and forwards to loopback.
  *
- * Command:
- *   socat TCP-LISTEN:18789,bind=<tailscale-ip>,reuseaddr,fork TCP:127.0.0.1:18789
+ *   Jerry                                      Tom
+ *   ─────                                      ───
+ *   ws://tom-tailscale-ip:18789 ─ Tailscale ─► socat (tailscale IF:18789)
+ *                                                   │ forwards
+ *                                              127.0.0.1:18789 (gateway)
+ *
+ *   Persistent via systemd user service. See buildSystemdService().
+ *   Command: socat TCP-LISTEN:18789,bind=<tailscaleIP>,reuseaddr,fork TCP:127.0.0.1:18789
+ *
+ * ### Jerry (Windows) — gateway binds to Tailscale, proxy exposes loopback
+ *
+ *   Jerry's gateway binds to the Tailscale IP so Tom can reach it.
+ *   But the local OpenClaw TUI connects to ws://127.0.0.1:18789 — which
+ *   isn't listening — so the TUI fails to open.
+ *
+ *   Fix: Windows netsh portproxy (built-in, registry-persistent, no extra tools).
+ *   Routes loopback:18789 → tailscale-ip:18789, making the TUI work locally.
+ *
+ *   TUI (local)                                Jerry gateway
+ *   ───────────                                ─────────────
+ *   127.0.0.1:18789 ─► netsh portproxy ──────► tailscale-ip:18789
+ *
+ *   Persistent: netsh rules survive reboots (stored in registry).
+ *   Command: netsh interface portproxy add v4tov4
+ *              listenaddress=127.0.0.1 listenport=18789
+ *              connectaddress=<tailscaleIP> connectport=18789
+ *
+ *   See buildNetshPortProxyCommand() and addWindowsLoopbackProxy().
+ *
+ * ## Summary
+ *
+ *   Role   | Gateway binds to | Proxy direction          | Tool
+ *   ────── | ──────────────── | ─────────────────────── | ──────────────
+ *   Tom    | loopback         | tailscale → loopback    | socat (Linux)
+ *   Jerry  | tailscale        | loopback → tailscale    | netsh (Windows)
  */
 
 import { exec } from "child_process";
@@ -89,6 +113,79 @@ export async function isSocatInstalled(): Promise<boolean> {
   try {
     await execAsync("which socat");
     return true;
+  } catch {
+    return false;
+  }
+}
+
+// ─── Windows (Jerry) helpers ─────────────────────────────────────────────────
+
+/**
+ * Returns the netsh portproxy command that makes the OpenClaw TUI work locally
+ * on a Jerry node whose gateway is bound to a Tailscale IP.
+ *
+ * Problem: Jerry binds its gateway to <tailscaleIP>:18789 so Tom can reach it.
+ * The local OpenClaw TUI always connects to ws://127.0.0.1:18789 — which isn't
+ * listening — so the TUI fails to open on the same machine.
+ *
+ * Fix: Add a Windows portproxy rule (loopback → tailscaleIP). Persists in the
+ * registry across reboots — no scheduled task or service needed.
+ *
+ * @example
+ * // Run once (elevated prompt on Jerry):
+ * const cmd = buildNetshPortProxyCommand({ tailscaleIP: "100.119.44.38" });
+ * // netsh interface portproxy add v4tov4 listenaddress=127.0.0.1 listenport=18789 connectaddress=100.119.44.38 connectport=18789
+ */
+export function buildNetshPortProxyCommand(config: ProxyConfig): string {
+  const port = config.port ?? 18789;
+  return [
+    "netsh interface portproxy add v4tov4",
+    `listenaddress=127.0.0.1`,
+    `listenport=${port}`,
+    `connectaddress=${config.tailscaleIP}`,
+    `connectport=${port}`,
+  ].join(" ");
+}
+
+/**
+ * Returns the netsh command to remove the portproxy rule (e.g. during uninstall).
+ */
+export function buildNetshPortProxyRemoveCommand(config: ProxyConfig): string {
+  const port = config.port ?? 18789;
+  return `netsh interface portproxy delete v4tov4 listenaddress=127.0.0.1 listenport=${port}`;
+}
+
+/**
+ * Adds the loopback→tailscale portproxy rule on the current Windows machine.
+ * Must be run in an elevated (admin) context.
+ *
+ * Idempotent: if the rule already exists, netsh returns an error which we swallow.
+ */
+export async function addWindowsLoopbackProxy(config: ProxyConfig): Promise<void> {
+  if (process.platform !== "win32") {
+    throw new Error("addWindowsLoopbackProxy is Windows-only");
+  }
+  const cmd = buildNetshPortProxyCommand(config);
+  try {
+    await execAsync(cmd);
+  } catch (err: unknown) {
+    // netsh exits non-zero if the rule already exists — that's fine
+    const msg = err instanceof Error ? err.message : String(err);
+    if (!msg.includes("already exists") && !msg.includes("The object already exists")) {
+      throw err;
+    }
+  }
+}
+
+/**
+ * Verifies the portproxy rule is present on the current Windows machine.
+ */
+export async function isWindowsLoopbackProxyInstalled(config: ProxyConfig): Promise<boolean> {
+  if (process.platform !== "win32") return false;
+  const port = config.port ?? 18789;
+  try {
+    const { stdout } = await execAsync("netsh interface portproxy show all");
+    return stdout.includes(`127.0.0.1`) && stdout.includes(String(port)) && stdout.includes(config.tailscaleIP);
   } catch {
     return false;
   }
