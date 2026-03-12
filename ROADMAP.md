@@ -101,15 +101,17 @@
 - [x] Cloud vs local token breakdown, local savings estimate
 - [x] Budget routing advice when cloud spend is high
 
-### 3d. Handoff continuity (both)
-- [ ] Context summary auto-generated when task completes (use LLM, short)
-- [ ] Summary passed in `TJTaskMessage.context_summary` on next task
-- [ ] Tom retains last N summaries per peer for multi-turn context
+### 3d. Handoff continuity (both) ✅ (2026-03-12, Tom side)
+- [x] Context summary auto-generated when task completes (template-based, LLM-upgradeable)
+- [x] Summary passed in `TJTaskMessage.context_summary` on next task
+- [x] Tom retains last N=10 summaries per peer (~/.tom-and-jerry/context/<peer>.json)
+- [ ] Jerry side: include `context_summary` in TJResultMessage on result delivery (GLaDOS)
 
-### 3e. Multi-Jerry support (Calcifer)
-- [ ] Config: `peer_nodes[]` array instead of single `peer_node`
-- [ ] `tj send --peer <name>` to target a specific Jerry
-- [ ] Capability-aware auto-selection: pick the Jerry best suited to the task
+### 3e. Multi-Jerry support (Calcifer) ✅ (2026-03-12)
+- [x] Config: `peer_nodes[]` array added alongside `peer_node` (backwards-compatible)
+- [x] `tj send --peer <name>` to target a specific Jerry
+- [x] `tj send --auto` — capability-aware auto-selection via cached capabilities
+- [x] `tj peers` — list all peers with GPU/Ollama/skill info; --ping for live check
 
 ### 3f. Jerry skill registry endpoint (GLaDOS)
 - [ ] `tj capabilities advertise` runs on Jerry startup (add to startup.bat / systemd)
