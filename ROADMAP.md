@@ -151,6 +151,41 @@
 
 ---
 
+## Phase 5 — Resilience & Developer Experience 🚧
+
+> Owned by: Calcifer (Tom/Linux) + GLaDOS (Jerry/Windows) in parallel
+
+### 5a. `tj config` command (Calcifer) ✅ (2026-03-12)
+- [x] `tj config show` — pretty-print config, redact secrets
+- [x] `tj config get <key>` — read a single key (dot-notation)
+- [x] `tj config set <key> <value>` — write a key with auto type coercion
+- [x] `tj config path` — print config file path
+
+### 5b. `tj test` command (Calcifer) ✅ (2026-03-12)
+- [x] Tailscale reachability check with RTT
+- [x] Gateway health check
+- [x] Round-trip wake message test with RTT
+- [x] Summary table output (+ --json flag)
+- [x] Exit code 1 on any failure (useful for CI/health scripts)
+
+### 5c. `tj watch` daemon — Jerry-side task listener (GLaDOS)
+- [ ] Persistent process that polls for pending tasks from Tom
+- [ ] Auto-calls `tj result <id> <output>` when task state file is created
+- [ ] Configurable poll interval (default: 5s)
+- [ ] Graceful shutdown on SIGINT/SIGTERM
+
+### 5d. Webhook result push (Calcifer)
+- [ ] Tom exposes POST /result on its gateway (authenticated)
+- [ ] Jerry calls POST /result instead of polling — eliminates --wait latency
+- [ ] Fallback to polling if webhook not available
+
+### 5e. Exponential backoff + retry (Calcifer)
+- [ ] `tj send` retries on transient failures (gateway down, WS timeout)
+- [ ] Configurable max retries + base delay
+- [ ] Backoff state persisted so cron retries don't duplicate
+
+---
+
 ## Who Owns What
 
 | Area | Owner |

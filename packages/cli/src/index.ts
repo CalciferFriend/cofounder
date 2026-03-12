@@ -21,6 +21,8 @@ import { peers } from "./commands/peers.ts";
 import { publish } from "./commands/publish.ts";
 import { discover } from "./commands/discover.ts";
 import { logs } from "./commands/logs.ts";
+import { configShow, configGet, configSet, configPath } from "./commands/config.ts";
+import { tjTest } from "./commands/test.ts";
 import { loadConfig } from "./config/store.ts";
 
 const program = new Command()
@@ -212,6 +214,45 @@ program
   .action((opts: { limit?: string; status?: string; peer?: string; since?: string; output?: boolean; json?: boolean; follow?: boolean }) => {
     return logs(opts);
   });
+
+// ─── Config ──────────────────────────────────────────────────────────────────
+
+const configCmd = program
+  .command("config")
+  .description("View and edit the TJ configuration")
+  .action(() => configShow());
+
+configCmd
+  .command("show")
+  .description("Pretty-print current config (secrets redacted)")
+  .action(configShow);
+
+configCmd
+  .command("get")
+  .argument("<key>", "Config key (dot-notation, e.g. this_node.name)")
+  .description("Get a config value")
+  .action(configGet);
+
+configCmd
+  .command("set")
+  .argument("<key>", "Config key (dot-notation, e.g. this_node.name)")
+  .argument("<value>", "Value to set (auto-coerced: true/false/number/JSON)")
+  .description("Set a config value")
+  .action(configSet);
+
+configCmd
+  .command("path")
+  .description("Print config file path (machine-readable)")
+  .action(() => configPath());
+
+// ─── Test ─────────────────────────────────────────────────────────────────────
+
+program
+  .command("test")
+  .description("End-to-end connectivity test: Tailscale → Gateway → round-trip")
+  .option("--peer <name>", "Target peer name")
+  .option("--json", "Output as JSON")
+  .action((opts: { peer?: string; json?: boolean }) => tjTest(opts));
 
 program
   .command("discover")
