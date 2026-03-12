@@ -147,7 +147,7 @@
 ### 4d. Discord community + showcase
 - [ ] Discord community for tom-and-jerry setups
 - [ ] Showcase: what are people building with it?
-- [ ] Docs site (VitePress or similar)
+- [x] Docs site (VitePress) ✅ (2026-03-12) — 34 pages across guide/reference/protocol/hardware
 
 ---
 

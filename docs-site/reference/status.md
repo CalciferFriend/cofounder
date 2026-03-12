@@ -1,0 +1,196 @@
+# `tj status` — Reference
+
+Show the health and state of all configured nodes.
+
+---
+
+## Synopsis
+
+```bash
+tj status [flags]
+```
+
+---
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `--peer <name>` | Show detailed status for one peer |
+| `--json` | JSON output |
+| `--watch` | Refresh every 5 seconds (live view) |
+
+---
+
+## Output
+
+### Default
+
+```bash
+$ tj status
+
+tom-and-jerry v0.5.2
+
+Tom  (Calcifer 🔥)
+  ✓  gateway healthy      127.0.0.1:3737
+  ✓  Tailscale up         100.x.y.z
+  ✓  provider             anthropic/claude-sonnet-4-5
+
+Jerry  (GLaDOS 🤖  —  jerry-home)
+  ✓  Tailscale reachable  100.a.b.c
+  ✓  gateway healthy      100.a.b.c:3737
+  ✓  last heartbeat       8s ago
+  ✓  Ollama running       3 models
+  ✓  WOL configured       D8:5E:D3:04:18:B4
+     GPU                  NVIDIA RTX 3070 Ti · 8 GB VRAM
+
+Jerry  (jerry-pi 🍓)
+  ✓  Tailscale reachable  100.c.d.e
+  ✓  gateway healthy      100.c.d.e:3737
+  ✓  last heartbeat       22s ago
+     WOL                  not configured
+
+Jerry  (jerry-beast 🦾)
+  ✗  Tailscale offline    (last seen: 4h 12m ago)
+  ✓  WOL configured       D8:5E:D3:AA:BB:CC
+     Capabilities cached  (fetched 4h ago)
+
+Budget (today): $0.18 cloud / $0.00 local (5 tasks)
+```
+
+### With `--peer`
+
+```bash
+$ tj status --peer jerry-beast
+
+Jerry (jerry-beast 🦾)  —  RTX 4090
+  Tailscale IP:    100.a.b.c
+  Status:          OFFLINE (last seen 4h 12m ago)
+  WOL:             ✓ configured  MAC: D8:5E:D3:AA:BB:CC
+  Gateway port:    3737
+
+  Cached capabilities (4h old):
+    GPU:      NVIDIA RTX 4090 · 24 GB VRAM · CUDA 12.3
+    Ollama:   4 models
+              - llama3:70b-instruct-q4_0
+              - qwen2.5-coder:32b
+              - nomic-embed-text
+              - llava:13b
+    Skills:   inference:70b, image-gen, code, vision, embeddings
+
+  Budget (today): $0.00 (0 tasks)
+```
+
+---
+
+## JSON output
+
+```bash
+$ tj status --json
+```
+
+```json
+{
+  "version": "0.5.2",
+  "tom": {
+    "name": "Calcifer",
+    "emoji": "🔥",
+    "tailscale_ip": "100.x.y.z",
+    "gateway_healthy": true,
+    "gateway_url": "127.0.0.1:3737",
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-5"
+  },
+  "peers": [
+    {
+      "name": "jerry-home",
+      "emoji": "🤖",
+      "tailscale_ip": "100.a.b.c",
+      "tailscale_reachable": true,
+      "gateway_healthy": true,
+      "last_heartbeat_seconds_ago": 8,
+      "wol_configured": true,
+      "capabilities": {
+        "gpu": "NVIDIA RTX 3070 Ti",
+        "vram_gb": 8,
+        "ollama_running": true,
+        "ollama_model_count": 3,
+        "skill_tags": ["ollama", "gpu-inference"]
+      }
+    },
+    {
+      "name": "jerry-beast",
+      "tailscale_reachable": false,
+      "gateway_healthy": false,
+      "last_seen_seconds_ago": 15120,
+      "wol_configured": true
+    }
+  ],
+  "budget_today": {
+    "cloud_cost_usd": 0.18,
+    "local_cost_usd": 0.00,
+    "task_count": 5
+  }
+}
+```
+
+---
+
+## Status indicators
+
+| Symbol | Meaning |
+|--------|---------|
+| `✓` | Check passed |
+| `✗` | Check failed |
+| (blank) | Info only, not a health check |
+
+---
+
+## What `tj status` checks
+
+1. **Tom gateway** — HTTP GET `http://127.0.0.1:3737/health`
+2. **Tailscale** — `tailscale status` for this node
+3. **For each peer:**
+   - Tailscale reachability — `tailscale ping <peer-ip>` (fast, cached)
+   - Gateway health — HTTP GET `http://<peer-ip>:<port>/health`
+   - Last heartbeat — age of last `TJHeartbeat` received from Jerry
+   - WOL config — whether MAC address is configured
+
+Heartbeat is passive — it uses the last-received time. `tj status` does not actively contact Jerry's heartbeat endpoint.
+
+---
+
+## `tj doctor`
+
+For deeper diagnostics (SSH, WOL, config validation):
+
+```bash
+tj doctor
+```
+
+Output:
+
+```
+Diagnosing...
+
+✓  Node.js v22.14.0
+✓  Tailscale running (100.x.y.z)
+✓  OpenClaw gateway healthy (127.0.0.1:3737)
+✓  jerry-home: Tailscale reachable (12ms)
+✓  jerry-home: gateway healthy
+✓  jerry-home: SSH access OK
+✓  jerry-home: WOL configured
+✗  jerry-beast: Tailscale unreachable (offline)
+⚠  jerry-beast: capabilities cache is 4h old (stale)
+
+1 error, 1 warning
+Run `tj wake --peer jerry-beast` to check WOL setup.
+```
+
+---
+
+## See also
+
+- [tj logs](/reference/logs) — task history
+- [tj wake](/reference/wake) — wake offline Jerry
+- [tj doctor](/reference/cli#tj-doctor) — deep diagnostics
