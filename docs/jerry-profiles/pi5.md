@@ -1,0 +1,174 @@
+# Jerry on Raspberry Pi 5
+
+Best use: always-on, low-power compute node for lightweight tasks — embeddings,
+text summarization, small-context chat (3B–7B models with quantization).
+
+---
+
+## Hardware
+
+| Item | Spec |
+|------|------|
+| CPU | ARM Cortex-A76, 4-core 2.4 GHz |
+| RAM | 4 GB or 8 GB LPDDR4X (8 GB **strongly** recommended) |
+| Storage | 32 GB+ microSD (Class 10/A2) or USB SSD (much faster) |
+| Power | Official 27W USB-C PSU — don't skimp |
+| OS | Raspberry Pi OS Lite (64-bit) or Ubuntu 24.04 LTS (arm64) |
+
+> **USB SSD note:** SD cards are the #1 source of Pi failures under write load.
+> Use a USB SSD (e.g. Samsung T7) as your root disk for any persistent Jerry node.
+
+---
+
+## What it can run
+
+| Task | Feasible? | Notes |
+|------|-----------|-------|
+| Embeddings (nomic-embed-text) | ✅ | Fast, ~300 MB VRAM |
+| 3B chat (llama3.2:3b-q4) | ✅ | ~2 GB RAM, ~5 tok/s |
+| 7B chat (mistral:7b-q4) | ⚠️ | ~4.5 GB RAM, ~2 tok/s, 8 GB Pi only |
+| 13B+ models | ❌ | Not enough RAM |
+| Image generation | ❌ | CPU-only SD is impractically slow |
+| Code generation (qwen2.5-coder:3b) | ✅ | Good for smaller tasks |
+
+---
+
+## Installation
+
+### 1 — Flash and boot
+
+```bash
+# Use Raspberry Pi Imager → Raspberry Pi OS Lite (64-bit)
+# Enable SSH, set hostname (e.g. jerry-pi), configure WiFi in Imager
+```
+
+### 2 — System setup
+
+```bash
+sudo apt-get update && sudo apt-get upgrade -y
+sudo apt-get install -y curl git
+```
+
+### 3 — Install Node 22
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt-get install -y nodejs
+node -v  # should be v22.x
+```
+
+### 4 — Install Ollama (arm64)
+
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
+# Verify
+ollama --version
+
+# Pull a starter model
+ollama pull llama3.2:3b
+ollama pull nomic-embed-text
+```
+
+### 5 — Install OpenClaw + tom-and-jerry
+
+```bash
+sudo npm install -g openclaw tom-and-jerry
+# Verify
+tj --version
+```
+
+### 6 — Install Tailscale
+
+```bash
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up --authkey tskey-auth-YOUR_KEY
+tailscale ip -4  # note this IP for Tom's config
+```
+
+### 7 — Run tj onboard (Jerry role)
+
+```bash
+tj onboard
+# Role: Jerry
+# Name: jerry-pi (or whatever)
+# Model: Ollama → llama3.2:3b
+# Tom's Tailscale IP: <from Tom's tj status>
+```
+
+---
+
+## Systemd service (keep gateway running)
+
+```ini
+# /etc/systemd/system/tj-gateway.service
+[Unit]
+Description=tom-and-jerry gateway
+After=network-online.target tailscaled.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+ExecStart=/usr/bin/node /usr/lib/node_modules/openclaw/index.js gateway start
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl enable --now tj-gateway
+sudo systemctl status tj-gateway
+```
+
+---
+
+## Docker (Pi 5 ARM64)
+
+If you prefer Docker over bare-metal:
+
+```bash
+# Build locally
+docker build --platform linux/arm64 \
+  -t jerry-pi:arm64 \
+  -f docker/jerry/Dockerfile.arm64 .
+
+# Or pull pre-built (when published)
+docker run -d \
+  --platform linux/arm64 \
+  -e TS_AUTHKEY=tskey-auth-... \
+  -e JERRY_NAME="jerry-pi" \
+  -e JERRY_EMOJI="🍓" \
+  -e OLLAMA_MODELS="llama3.2:3b,nomic-embed-text" \
+  calcifer-ai/jerry:arm64
+```
+
+See [`docker/jerry/Dockerfile.arm64`](../../docker/jerry/Dockerfile.arm64) for the full image definition.
+
+---
+
+## Performance tips
+
+- **USB SSD** — move rootfs off SD card, massive I/O improvement for model loading
+- **Swap** — set 4 GB swap on SSD (not SD) for 7B models on 8 GB Pi: `sudo dphys-swapfile`
+- **CPU governor** — force performance mode: `echo performance | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor`
+- **Cooling** — active cooling is a must under sustained inference load; the official Pi 5 case with fan is fine
+- **Quantization** — always use Q4_K_M or Q4_0 variants; Q8 doubles RAM usage for minimal quality gain on these models
+
+---
+
+## Capability tags
+
+After `tj capabilities advertise`, your Pi 5 will appear in Tom's routing with:
+
+```json
+{
+  "hardware": "pi5",
+  "gpu": null,
+  "skill_tags": ["embeddings", "summarize", "chat:small"],
+  "ollama_models": ["llama3.2:3b", "nomic-embed-text"]
+}
+```
+
+Tom will automatically route embedding and lightweight summarization tasks here.

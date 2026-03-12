@@ -133,8 +133,9 @@
 - [x] `docker/jerry/pull-models.sh` — pull comma-separated models at startup
 - [x] `docker-compose.yml` — profiles: `jerry-cpu` and `jerry-cuda` added alongside Tom
 - [x] `docker/.env.example` — unified env template for both nodes
-- [ ] Pre-built M2 Mac instructions (Docker not ideal; `tj onboard` flow is better)
-- [ ] Raspberry Pi 5 variant (ARM64 base image + quantized Ollama models)
+- [x] Pre-built M2 Mac instructions (`docs/jerry-profiles/m2-mac.md` — uses `tj onboard`, no Docker)
+- [x] Raspberry Pi 5 variant (ARM64 base image + quantized Ollama models) ✅ (2026-03-12)
+- [x] RTX 4090 profile docs (`docs/jerry-profiles/rtx-4090.md`) ✅ (2026-03-12)
 
 ### 4c. `tj logs` — task history viewer (Calcifer) ✅ (2026-03-12)
 - [x] Pretty-printed log view with status badges, relative timestamps, peer name

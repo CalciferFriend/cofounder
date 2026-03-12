@@ -1,0 +1,100 @@
+# Jerry node — Raspberry Pi 5 / ARM64 image
+# Ollama + Node 22 + Tailscale + OpenClaw + tom-and-jerry
+#
+# Build:
+#   docker buildx build --platform linux/arm64 \
+#     -t calcifer-ai/jerry:arm64 \
+#     -f docker/jerry/Dockerfile.arm64 .
+#
+# Run:
+#   docker run -d \
+#     --platform linux/arm64 \
+#     -e TS_AUTHKEY=tskey-auth-... \
+#     -e JERRY_NAME="jerry-pi" \
+#     -e JERRY_EMOJI="🍓" \
+#     -e OLLAMA_MODELS="llama3.2:3b,nomic-embed-text" \
+#     calcifer-ai/jerry:arm64
+#
+# Notes:
+# - Based on Debian Bookworm slim (arm64) — no CUDA, CPU inference only
+# - Ollama arm64 build supports NEON acceleration on Cortex-A76 (Pi 5)
+# - Recommended models: llama3.2:3b-q4, nomic-embed-text, qwen2.5-coder:3b-q4
+# - For 7B models: requires 8 GB Pi + swap file (see jerry-profiles/pi5.md)
+
+FROM node:22-bookworm-slim AS base
+
+# ── System dependencies ───────────────────────────────────────────────────────
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash \
+    curl \
+    wget \
+    ca-certificates \
+    openssh-server \
+    git \
+    procps \
+    iproute2 \
+    iptables \
+    && rm -rf /var/lib/apt/lists/*
+
+# ── Tailscale (arm64) ─────────────────────────────────────────────────────────
+RUN curl -fsSL https://pkgs.tailscale.com/stable/debian/bookworm.gpg | \
+    gpg --dearmor -o /usr/share/keyrings/tailscale-archive-keyring.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] \
+    https://pkgs.tailscale.com/stable/debian bookworm main" \
+    > /etc/apt/sources.list.d/tailscale.list && \
+    apt-get update && apt-get install -y --no-install-recommends tailscale && \
+    rm -rf /var/lib/apt/lists/*
+
+# ── Ollama (arm64 binary) ─────────────────────────────────────────────────────
+# Install via official script — detects arm64 and pulls the right binary
+RUN curl -fsSL https://ollama.com/install.sh | OLLAMA_VERSION=latest sh
+
+# ── SSH server setup ──────────────────────────────────────────────────────────
+RUN mkdir -p /run/sshd && \
+    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config && \
+    sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+
+# ── OpenClaw + tom-and-jerry ──────────────────────────────────────────────────
+RUN npm install -g openclaw tom-and-jerry
+
+# ── TUN device for Tailscale ──────────────────────────────────────────────────
+RUN mkdir -p /dev/net && \
+    mknod /dev/net/tun c 10 200 && \
+    chmod 600 /dev/net/tun
+
+# ── Swap helper for 7B on 8 GB Pi (optional, mount host swap instead) ─────────
+RUN apt-get update && apt-get install -y --no-install-recommends dphys-swapfile && \
+    rm -rf /var/lib/apt/lists/*
+
+# ── Entrypoint + helpers ──────────────────────────────────────────────────────
+COPY jerry/entrypoint.sh /entrypoint.sh
+COPY jerry/pull-models.sh /pull-models.sh
+RUN chmod +x /entrypoint.sh /pull-models.sh
+
+# ── Runtime config ────────────────────────────────────────────────────────────
+# Env vars (pass via -e or .env file):
+#   TS_AUTHKEY        — Tailscale auth key (required)
+#   JERRY_NAME        — Display name (default: jerry-pi)
+#   JERRY_EMOJI       — Emoji (default: 🍓)
+#   TOM_TAILSCALE_IP  — Tom's Tailscale IP (optional; can set via tj pair later)
+#   TOM_NAME          — Tom's peer name (optional)
+#   OLLAMA_MODELS     — Comma-separated models to pull at startup (optional)
+#                       e.g. "llama3.2:3b,nomic-embed-text"
+#   GATEWAY_PORT      — Port for OpenClaw gateway (default: 3737)
+#   SSH_PUBLIC_KEY    — Public key for Tom's SSH access (required for tj send)
+
+ENV JERRY_NAME="jerry-pi" \
+    JERRY_EMOJI="🍓" \
+    GATEWAY_PORT="3737" \
+    OLLAMA_HOST="0.0.0.0:11434" \
+    # Arm64 Ollama: use NEON where available, no CUDA
+    OLLAMA_NOPRUNE="1"
+
+# Gateway + Ollama ports
+EXPOSE ${GATEWAY_PORT} 11434 22
+
+# Persistent data — mount these as volumes for model + config persistence
+VOLUME ["/root/.ollama", "/root/.openclaw", "/root/.tom-and-jerry"]
+
+ENTRYPOINT ["/entrypoint.sh"]
