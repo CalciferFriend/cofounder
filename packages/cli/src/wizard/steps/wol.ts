@@ -38,7 +38,7 @@ export async function stepWOL(ctx: Partial<WizardContext>): Promise<Partial<Wiza
         p.text({
           message: "MAC address of the Jerry node's network adapter",
           placeholder: "D8:5E:D3:04:18:B4",
-          validate: (v) => {
+          validate: (v: string) => {
             const cleaned = v.replace(/[:-]/g, "");
             if (cleaned.length !== 12 || !/^[0-9a-fA-F]+$/.test(cleaned))
               return "Enter a valid MAC address (e.g., AA:BB:CC:DD:EE:FF)";
@@ -48,7 +48,7 @@ export async function stepWOL(ctx: Partial<WizardContext>): Promise<Partial<Wiza
         p.text({
           message: "Broadcast IP for the WOL packet (usually your router's broadcast address)",
           placeholder: "192.168.50.255",
-          validate: (v) => {
+          validate: (v: string) => {
             if (!/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(v.trim()))
               return "Enter a valid IPv4 broadcast address";
           },
@@ -57,7 +57,7 @@ export async function stepWOL(ctx: Partial<WizardContext>): Promise<Partial<Wiza
         p.text({
           message: "UDP port for WOL (router port forward target)",
           initialValue: "9",
-          validate: (v) => {
+          validate: (v: string) => {
             const n = parseInt(v, 10);
             if (isNaN(n) || n < 1 || n > 65535) return "Enter a valid port (1–65535)";
           },
@@ -66,7 +66,7 @@ export async function stepWOL(ctx: Partial<WizardContext>): Promise<Partial<Wiza
         p.text({
           message: "Max seconds to wait for boot after sending magic packet",
           initialValue: "120",
-          validate: (v) => {
+          validate: (v: string) => {
             const n = parseInt(v, 10);
             if (isNaN(n) || n < 10) return "Enter at least 10 seconds";
           },

@@ -22,13 +22,13 @@
 
 > Owned by: Calcifer (Tom/Linux) + GLaDOS (Jerry/Windows) in parallel
 
-### 2a. Onboard wizard — core flow (Calcifer)
-- [ ] Prerequisites check (Node ≥ 22, Tailscale running, OpenClaw installed)
-- [ ] Role selection (Tom/Jerry) with clear explanation of each
-- [ ] Identity setup (name, emoji, model provider)
-- [ ] Peer connection (Tailscale hostname/IP, SSH user/key, live test)
-- [ ] Gateway config write (loopback for Tom, tailscale for Jerry)
-- [ ] Round-trip validation before declaring success
+### 2a. Onboard wizard — core flow (Calcifer) ✅ (2026-03-12)
+- [x] Prerequisites check (Node ≥ 22, Tailscale running, OpenClaw installed)
+- [x] Role selection (Tom/Jerry) with clear explanation of each
+- [x] Identity setup (name, emoji, model provider)
+- [x] Peer connection (Tailscale hostname/IP, SSH user/key, live test)
+- [x] Gateway config write (loopback for Tom, tailscale for Jerry)
+- [x] Round-trip validation before declaring success
 
 ### 2b. Onboard wizard — Windows/Jerry steps (GLaDOS)
 - [ ] AutoLogin registry setup (with recovery prompt)
@@ -38,26 +38,27 @@
 - [ ] WOL prerequisites check (BIOS guidance, NIC settings)
 - [ ] Test boot chain end-to-end
 
-### 2c. Model provider abstraction (Calcifer)
-- [ ] Provider enum: `anthropic | openai | ollama | lmstudio | custom`
-- [ ] API key setup per provider (OS keychain via keytar)
-- [ ] Ollama auto-detect (is it running locally? list models)
-- [ ] Provider-specific OpenClaw config generation
-- [ ] Cost-routing: lightweight tasks → cloud, heavy → local (Jerry/Ollama)
+### 2c. Model provider abstraction (Calcifer) ✅ (2026-03-12)
+- [x] Provider enum: `anthropic | openai | ollama | lmstudio | custom`
+- [x] API key setup per provider (OS keychain via keytar)
+- [x] Ollama auto-detect (is it running locally? list models)
+- [x] Provider-specific OpenClaw config generation
+- [x] Cost-routing: lightweight tasks → cloud, heavy → local (Jerry/Ollama)
 
-### 2d. `tj send` pipeline — Phase 3 (both)
-- [ ] Tom: ping peer → WOL if needed → build TJMessage → send via wakeAgent
-- [ ] Jerry: receive task, process, send TJMessage result back
-- [ ] Streaming results (partial updates while Jerry works)
-- [ ] Timeout + retry logic
-- [ ] `tj send "generate an image of X"` → wakes GLaDOS, runs diffusion, returns path
+### 2d. `tj send` pipeline (both)
+- [x] Tom: ping peer → WOL if needed → build TJMessage → send via wakeAgent
+- [x] Timeout + retry logic
+- [x] `tj send --wait` polls for result via task state file
+- [ ] Jerry: `tj result <id> <output>` — receive + store result back (GLaDOS)
+- [ ] Streaming results (partial updates while Jerry works) — Phase 3
+- [ ] `tj send "generate an image of X"` → wakes GLaDOS, runs diffusion, returns path — Phase 3
 
-### 2e. `tj status` — live checks (Calcifer)
-- [ ] Tailscale reachability ping
-- [ ] Gateway health check (HTTP /health)
-- [ ] Last heartbeat timestamp
-- [ ] Current model + cost tracking
-- [ ] WOL capability indicator
+### 2e. `tj status` — live checks (Calcifer) ✅ (2026-03-11)
+- [x] Tailscale reachability ping
+- [x] Gateway health check (HTTP /health)
+- [x] Last heartbeat timestamp
+- [x] Current model + cost tracking
+- [x] WOL capability indicator
 
 ### 2f. Docker Tom template (Calcifer) ✅ (2026-03-11)
 - [x] `Dockerfile` for Tom node (Alpine + Node + OpenClaw + tom-and-jerry)
@@ -65,10 +66,15 @@
 - [x] One-liner: `docker run -e ANTHROPIC_API_KEY=... calcifierai/tom`
 - [x] Auto-registers with Tailscale on first boot (entrypoint.sh)
 
-### 2g. TJMessage discriminated union (both)
-- [ ] `TJTaskMessage`, `TJResultMessage`, `TJHeartbeatMessage` typed envelopes
-- [ ] Zod discriminated union on `type` field
-- [ ] Typed payload per message type (no more `JSON.parse(payload)`)
+### 2g. TJMessage discriminated union (both) ✅ (2026-03-11)
+- [x] `TJTaskMessage`, `TJResultMessage`, `TJHeartbeatMessage` typed envelopes
+- [x] Zod discriminated union on `type` field
+- [x] Typed payload per message type (no more `JSON.parse(payload)`)
+
+### 2h. Agent-to-agent messaging script (Calcifer) ✅ (2026-03-12)
+- [x] `send-to-agent.js` — standalone script, no build required
+- [x] Resolves peer URL + token from config or CLI flags
+- [x] Used by crons, CI, and agent sync protocols
 
 ---
 

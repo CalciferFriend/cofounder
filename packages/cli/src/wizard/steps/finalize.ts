@@ -17,6 +17,7 @@ export async function stepFinalize(ctx: Partial<WizardContext>): Promise<Partial
 
   const config: TJConfig = {
     version: "0.1.0",
+    gateway_port: 18789,
     this_node: {
       role: ctx.role!,
       name: ctx.name!,
@@ -46,6 +47,7 @@ export async function stepFinalize(ctx: Partial<WizardContext>): Promise<Partial
             health_endpoint: `http://${ctx.peerTailscaleIP}:${ctx.peerGatewayPort ?? 18789}/health`,
           }
         : { enabled: false, router_port: 9, wait_timeout_seconds: 120, poll_interval_seconds: 2 },
+      gateway_port: ctx.peerGatewayPort ?? 18789,
       gateway: {
         port: ctx.peerGatewayPort ?? 18789,
         bind: ctx.peerBindMode ?? "tailscale",

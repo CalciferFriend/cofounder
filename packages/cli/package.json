@@ -1,7 +1,7 @@
 {
   "name": "@tom-and-jerry/cli",
   "version": "0.1.0",
-  "description": "The `tj` CLI — onboard wizard, pairing, status, wake, and task delegation",
+  "description": "The `tj` CLI \u2014 onboard wizard, pairing, status, wake, and task delegation",
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^0.10.0",
-    "@tom-and-jerry/core": "workspace:*",
+    "@tom-and-jerry/core": "file:../core",
     "commander": "^13.0.0",
     "keytar": "^7.9.0",
     "picocolors": "^1.1.0",
