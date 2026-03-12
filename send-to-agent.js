@@ -36,7 +36,32 @@ import { readFileSync, existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { createRequire } from "node:module";
-import WebSocket from "ws";
+// ws may be in a workspace package node_modules; try a few paths
+let WebSocket;
+try {
+  ({ default: WebSocket } = await import("ws"));
+} catch {
+  // Walk up workspace to find ws
+  const { createRequire } = await import("node:module");
+  const { fileURLToPath } = await import("node:url");
+  const { dirname, join: pathJoin } = await import("node:path");
+  const candidates = [
+    new URL("./packages/core/node_modules/ws/index.js", import.meta.url),
+    new URL("./node_modules/ws/index.js", import.meta.url),
+  ];
+  let loaded = false;
+  for (const c of candidates) {
+    try {
+      ({ default: WebSocket } = await import(c.href));
+      loaded = true;
+      break;
+    } catch {}
+  }
+  if (!loaded) {
+    console.error("[send-to-agent] Cannot find 'ws' module. Run: npm install ws");
+    process.exit(2);
+  }
+}
 
 // ─── Arg parsing ─────────────────────────────────────────────────────────────
 
