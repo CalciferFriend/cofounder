@@ -65,6 +65,23 @@ export {
   isWindowsLoopbackProxyInstalled,
 } from "./gateway/proxy.ts";
 export type { ProxyConfig } from "./gateway/proxy.ts";
+export {
+  startResultServer,
+  deliverResultWebhook,
+  parseWebhookUrl,
+} from "./gateway/result-server.ts";
+export type { ResultServerHandle, ResultServerOptions, ResultWebhookPayload } from "./gateway/result-server.ts";
+
+// Retry / backoff
+export {
+  withRetry,
+  getRetryState,
+  setRetryState,
+  clearRetryState,
+  nextRetryAt,
+  cronRetryDecision,
+} from "./retry.ts";
+export type { RetryOptions, RetryState, RetryStatus } from "./retry.ts";
 
 // Routing (capability-aware + heuristic fallback)
 export { suggestRouting, routeTask } from "./routing.ts";

@@ -174,15 +174,20 @@
 - [ ] Configurable poll interval (default: 5s)
 - [ ] Graceful shutdown on SIGINT/SIGTERM
 
-### 5d. Webhook result push (Calcifer)
-- [ ] Tom exposes POST /result on its gateway (authenticated)
-- [ ] Jerry calls POST /result instead of polling — eliminates --wait latency
-- [ ] Fallback to polling if webhook not available
+### 5d. Webhook result push (Calcifer) ✅ (2026-03-12)
+- [x] Tom exposes POST /result on its gateway (authenticated, token-gated, one-shot)
+- [x] `deliverResultWebhook()` helper in core — Jerry calls this to push result back
+- [x] `parseWebhookUrl()` parses webhook URL embedded in wake message
+- [x] `startResultServer()` binds to Tailscale IP, auto-selects port, auto-closes after delivery
+- [x] Fallback to polling if webhook not received (older Jerry / network block)
+- [x] Tests: 9 tests covering auth, task_id guard, timeout, one-shot close, URL parsing
 
-### 5e. Exponential backoff + retry (Calcifer)
-- [ ] `tj send` retries on transient failures (gateway down, WS timeout)
-- [ ] Configurable max retries + base delay
-- [ ] Backoff state persisted so cron retries don't duplicate
+### 5e. Exponential backoff + retry (Calcifer) ✅ (2026-03-12)
+- [x] `tj send` retries on transient failures (gateway down, WS timeout) via `withRetry()`
+- [x] Configurable max retries + base delay (`--max-retries` CLI flag)
+- [x] Backoff state persisted so cron retries don't duplicate (`~/.tom-and-jerry/retry/<id>.json`)
+- [x] `cronRetryDecision()` — send/skip/retry/backoff logic for cron safety
+- [x] Tests: 19 tests covering withRetry, RetryState persistence, cronRetryDecision, nextRetryAt
 
 ---
 

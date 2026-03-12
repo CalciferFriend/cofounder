@@ -8,33 +8,49 @@
  *   2. If offline and WOL configured → send magic packet, wait for boot
  *   3. Verify peer gateway is healthy
  *   4. Build TJTaskMessage, write pending task state
- *   5. Deliver via wakeAgent (injects into peer's OpenClaw session)
- *   6. If --wait: poll ~/.tom-and-jerry/state/tasks/<id>.json for result
+ *   5. Deliver via wakeAgent (injects into peer's OpenClaw session) — with retry/backoff
+ *   6. If --wait:
+ *        a. Start a result webhook server (Phase 5d) — Jerry POSTs back directly
+ *        b. Webhook URL included in the wake message so Jerry knows where to call
+ *        c. Falls back to polling if webhook never arrives (older Jerry / network issue)
  *
- * Result delivery:
- *   After the peer (GLaDOS) completes the task, it calls:
- *     tj result <task-id> "output text here"
- *   …which updates the task state file. Tom's --wait poll picks it up.
- *
- *   GLaDOS can deliver this via SSH, socat, or via wakeAgent injection that
- *   triggers Calcifer to run the command.
+ * Retry safety (Phase 5e):
+ *   wakeAgent delivery is wrapped in withRetry(). A RetryState file persisted at
+ *   ~/.tom-and-jerry/retry/<task-id>.json prevents duplicate sends from cron runs.
  */
 
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 import { loadConfig } from "../config/store.ts";
-import { wakeAgent } from "@tom-and-jerry/core";
-import { pingPeer } from "@tom-and-jerry/core";
-import { checkGatewayHealth } from "@tom-and-jerry/core";
-import { sendMagicPacket, wakeAndWait } from "@tom-and-jerry/core";
-import { suggestRouting } from "@tom-and-jerry/core";
-import { createTaskMessage } from "@tom-and-jerry/core";
-import { createTaskState, pollTaskCompletion } from "../state/tasks.ts";
-import { buildContextSummary } from "@tom-and-jerry/core";
+import {
+  wakeAgent,
+  pingPeer,
+  checkGatewayHealth,
+  sendMagicPacket,
+  wakeAndWait,
+  suggestRouting,
+  createTaskMessage,
+  buildContextSummary,
+  startResultServer,
+  withRetry,
+  setRetryState,
+  clearRetryState,
+  cronRetryDecision,
+  type ResultWebhookPayload,
+} from "@tom-and-jerry/core";
+import { createTaskState, pollTaskCompletion, updateTaskState } from "../state/tasks.ts";
 import { getPeer, selectBestPeer, formatPeerList } from "../peers/select.ts";
 
 const WAKE_TIMEOUT_ATTEMPTS = 45; // 45 × 2s = 90s max
 const WAKE_POLL_MS = 2000;
+
+// Retry config for wakeAgent delivery (Phase 5e)
+const SEND_RETRY_OPTS = {
+  maxAttempts: 3,
+  baseDelayMs: 2_000,
+  maxDelayMs: 15_000,
+  jitter: true,
+};
 
 export interface SendOptions {
   wait?: boolean;
@@ -44,6 +60,21 @@ export interface SendOptions {
   peer?: string;
   /** Auto-select best peer based on task + capabilities (ignores --peer) */
   auto?: boolean;
+  /**
+   * Skip the cron duplicate-send guard (default: false).
+   * Set this if you know the task is a fresh send and want to bypass state checks.
+   */
+  force?: boolean;
+  /**
+   * Disable the result webhook server (fall back to polling only).
+   * Useful for debugging or when Tom's Tailscale IP isn't accessible from Jerry.
+   */
+  noWebhook?: boolean;
+  /**
+   * Max retry attempts on delivery failure (default: 3).
+   * Overrides SEND_RETRY_OPTS.maxAttempts.
+   */
+  maxRetries?: string;
 }
 
 export async function send(task: string, opts: SendOptions = {}) {
@@ -154,6 +185,23 @@ export async function send(task: string, opts: SendOptions = {}) {
     constraints: [],
   }, { context_summary: contextSummary });
 
+  // ─── Phase 5e: Cron duplicate-send guard ────────────────────────────────────
+  if (!opts.force) {
+    const decision = await cronRetryDecision(msg.id).catch(() => "send" as const);
+    if (decision === "skip") {
+      p.log.warn(`Task ${pc.dim(msg.id.slice(0, 8))} is already in flight or completed — skipping.`);
+      p.log.info(pc.dim(`Use --force to send anyway.`));
+      p.outro("Skipped (cron guard).");
+      return;
+    }
+    if (decision === "backoff") {
+      p.log.warn(`Previous attempt failed — still within backoff window. Skipping.`);
+      p.log.info(pc.dim(`Use --force to send anyway.`));
+      p.outro("Skipped (backoff).");
+      return;
+    }
+  }
+
   // Step 4: write pending task state (unless --no-state)
   if (!opts.noState) {
     await createTaskState({
@@ -168,33 +216,103 @@ export async function send(task: string, opts: SendOptions = {}) {
     p.log.info(pc.dim(`  State: ~/.tom-and-jerry/state/tasks/${msg.id}.json`));
   }
 
-  // Step 5: deliver via wakeAgent
+  // ─── Phase 5d: Start result webhook server (if --wait and not disabled) ─────
+  let webhookUrl: string | null = null;
+  let webhookHandle: Awaited<ReturnType<typeof startResultServer>> | null = null;
+
+  if (opts.wait && !opts.noWebhook) {
+    const tomIP = config.this_node?.tailscale_ip ?? null;
+    if (tomIP && peer.gateway_token) {
+      try {
+        const timeoutMs = opts.waitTimeoutSeconds
+          ? parseInt(opts.waitTimeoutSeconds, 10) * 1000
+          : 300_000;
+        webhookHandle = await startResultServer({
+          taskId: msg.id,
+          token: peer.gateway_token, // shared secret — Jerry must echo this back
+          bindAddress: tomIP,
+          timeoutMs,
+        });
+        webhookUrl = webhookHandle.url;
+        p.log.info(pc.dim(`Webhook: ${webhookUrl} (Jerry will POST result here)`));
+      } catch {
+        // Webhook setup failed — fall through to polling silently
+        p.log.info(pc.dim("Webhook server unavailable — will use polling fallback."));
+      }
+    }
+  }
+
+  // Step 5: deliver via wakeAgent — with exponential backoff retry (Phase 5e)
   const sendS = p.spinner();
   sendS.start("Delivering task...");
   if (!peer.gateway_token) {
     p.log.error("Peer gateway token not set. Run `tj pair` first.");
     p.outro("Send failed.");
+    webhookHandle?.close();
     return;
   }
 
-  const wakeText =
-    `[TJMessage:task from ${msg.from} id=${msg.id}] ${task}` +
-    `\n\nWhen done, run: tj result ${msg.id} "<your output here>"`;
+  const wakeText = buildWakeText(msg.from, msg.id, task, webhookUrl);
 
-  const deliveryResult = await wakeAgent({
-    url: `ws://${peer.tailscale_ip}:${peerPort}`,
-    token: peer.gateway_token,
-    text: wakeText,
-    mode: "now",
-  });
+  const maxRetries = opts.maxRetries ? parseInt(opts.maxRetries, 10) : SEND_RETRY_OPTS.maxAttempts;
+  const retryOpts = { ...SEND_RETRY_OPTS, maxAttempts: maxRetries };
 
-  if (deliveryResult.ok) {
-    sendS.stop(pc.green(`✓ Task delivered to ${peer.name}`));
-  } else {
-    sendS.stop(pc.red(`✗ Delivery failed: ${deliveryResult.error}`));
+  // Mark as pending before first attempt
+  await setRetryState(msg.id, { status: "pending", attempts: 0 }).catch(() => {});
+
+  let deliveryResult: { ok: boolean; error?: string };
+  let attemptsMade = 0;
+
+  try {
+    deliveryResult = await withRetry(
+      async () => {
+        attemptsMade++;
+        const res = await wakeAgent({
+          url: `ws://${peer.tailscale_ip}:${peerPort}`,
+          token: peer.gateway_token!,
+          text: wakeText,
+          mode: "now",
+        });
+        if (!res.ok) throw new Error(res.error ?? "delivery failed");
+        return res;
+      },
+      {
+        ...retryOpts,
+        onRetry: (attempt, err, delayMs) => {
+          sendS.message(
+            `Attempt ${attempt} failed (${(err as Error).message}) — retrying in ${(delayMs / 1000).toFixed(1)}s...`,
+          );
+        },
+      },
+    );
+    await clearRetryState(msg.id).catch(() => {});
+  } catch (err) {
+    deliveryResult = { ok: false, error: (err as Error).message };
+    const nextRetryMs = Math.min(
+      SEND_RETRY_OPTS.baseDelayMs * Math.pow(2, attemptsMade),
+      SEND_RETRY_OPTS.maxDelayMs,
+    );
+    await setRetryState(msg.id, {
+      status: "failed",
+      attempts: attemptsMade,
+      last_error: deliveryResult.error,
+      next_retry_at: new Date(Date.now() + nextRetryMs).toISOString(),
+    }).catch(() => {});
+  }
+
+  if (!deliveryResult.ok) {
+    sendS.stop(
+      pc.red(
+        `✗ Delivery failed after ${attemptsMade} attempt(s): ${deliveryResult.error}`,
+      ),
+    );
+    p.log.info(pc.dim(`Retry state persisted. Next cron run will retry automatically.`));
     p.outro("Send failed.");
+    webhookHandle?.close();
     return;
   }
+
+  sendS.stop(pc.green(`✓ Task delivered to ${peer.name}`));
 
   // Step 6: wait for result if --wait flag
   if (opts.wait) {
@@ -202,14 +320,52 @@ export async function send(task: string, opts: SendOptions = {}) {
       ? parseInt(opts.waitTimeoutSeconds, 10) * 1000
       : 300_000;
 
+    const waitS = p.spinner();
+
+    // ─── Phase 5d: Try webhook first ──────────────────────────────────────────
+    if (webhookHandle) {
+      waitS.start(
+        `Waiting for ${peer.name} to POST result (webhook)... ${pc.dim("(Ctrl+C to detach)")}`,
+      );
+
+      const webhookResult = await webhookHandle.waitForResult();
+
+      if (webhookResult) {
+        waitS.stop(pc.green(`✓ Result received via webhook!`));
+        displayResult(webhookResult, p);
+
+        // Update task state with the webhook delivery
+        if (!opts.noState) {
+          await updateTaskState(msg.id, {
+            status: webhookResult.success ? "completed" : "failed",
+            result: {
+              output: webhookResult.output,
+              success: webhookResult.success,
+              error: webhookResult.error,
+              artifacts: webhookResult.artifacts ?? [],
+              tokens_used: webhookResult.tokens_used,
+              duration_ms: webhookResult.duration_ms,
+              cost_usd: webhookResult.cost_usd,
+            },
+          }).catch(() => {});
+        }
+        p.outro("Done.");
+        return;
+      }
+
+      // Webhook timed out — fall through to polling
+      waitS.stop(pc.yellow("Webhook timeout — falling back to polling..."));
+    }
+
+    // ─── Fallback: poll task state file ───────────────────────────────────────
     p.log.info(
       pc.dim(
-        `Waiting for result (timeout: ${timeoutMs / 1000}s). Press Ctrl+C to detach.`,
+        `Polling for result (timeout: ${timeoutMs / 1000}s). Press Ctrl+C to detach.`,
       ),
     );
 
-    const waitS = p.spinner();
-    waitS.start(`Waiting for ${peer.name} to complete task...`);
+    const pollS = p.spinner();
+    pollS.start(`Waiting for ${peer.name} to complete task...`);
 
     const finalState = await pollTaskCompletion(msg.id, {
       timeoutMs,
@@ -217,12 +373,12 @@ export async function send(task: string, opts: SendOptions = {}) {
     });
 
     if (!finalState) {
-      waitS.stop(pc.red("Task state lost — the state file may have been removed."));
+      pollS.stop(pc.red("Task state lost — the state file may have been removed."));
     } else if (finalState.status === "timeout") {
-      waitS.stop(pc.yellow("Timed out waiting for result. Task is still pending."));
+      pollS.stop(pc.yellow("Timed out waiting for result. Task is still pending."));
       p.log.info(`Check later with: ${pc.cyan(`tj task-status ${msg.id}`)}`);
     } else if (finalState.status === "completed") {
-      waitS.stop(pc.green("✓ Task completed!"));
+      pollS.stop(pc.green("✓ Task completed!"));
       p.log.info(`\n${pc.bold("Result:")}`);
       p.log.info(finalState.result?.output ?? "(empty output)");
       if (finalState.result?.artifacts && finalState.result.artifacts.length > 0) {
@@ -232,7 +388,7 @@ export async function send(task: string, opts: SendOptions = {}) {
         p.log.info(pc.dim(`Tokens used: ${finalState.result.tokens_used.toLocaleString()}`));
       }
     } else if (finalState.status === "failed") {
-      waitS.stop(pc.red("Task failed."));
+      pollS.stop(pc.red("Task failed."));
       p.log.error(finalState.result?.error ?? finalState.result?.output ?? "Unknown error");
     }
 
@@ -241,5 +397,46 @@ export async function send(task: string, opts: SendOptions = {}) {
     p.log.info(pc.dim(`To wait for result: tj send --wait "${task}"`));
     p.log.info(pc.dim(`To check status:   tj task-status ${msg.id.slice(0, 8)}`));
     p.outro("Task sent.");
+  }
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/**
+ * Build the wake message text sent to the peer agent.
+ * Includes the webhook URL when available so Jerry knows where to push the result.
+ */
+function buildWakeText(from: string, taskId: string, task: string, webhookUrl: string | null): string {
+  const lines = [
+    `[TJMessage:task from ${from} id=${taskId}] ${task}`,
+    ``,
+    `When done, run: tj result ${taskId} "<your output here>"`,
+  ];
+
+  if (webhookUrl) {
+    lines.push(``);
+    lines.push(`TJ-Result-Webhook: ${webhookUrl}`);
+    lines.push(`TJ-Result-Token: (use your configured gateway_token)`);
+    lines.push(`(POST JSON to the webhook URL to deliver result instantly, skipping polling)`);
+  }
+
+  return lines.join("\n");
+}
+
+/** Display a webhook-delivered result payload using clack prompts. */
+function displayResult(result: ResultWebhookPayload, promptsLib: typeof p): void {
+  promptsLib.log.info(`\n${pc.bold("Result:")}`);
+  promptsLib.log.info(result.output ?? "(empty output)");
+  if (result.artifacts && result.artifacts.length > 0) {
+    promptsLib.log.info(`Artifacts: ${result.artifacts.join(", ")}`);
+  }
+  if (result.tokens_used) {
+    promptsLib.log.info(pc.dim(`Tokens used: ${result.tokens_used.toLocaleString()}`));
+  }
+  if (result.cost_usd !== undefined) {
+    promptsLib.log.info(pc.dim(`Cost: $${result.cost_usd.toFixed(4)}`));
+  }
+  if (result.context_summary) {
+    promptsLib.log.info(pc.dim(`Context summary: ${result.context_summary.split("\n")[0]}`));
   }
 }
