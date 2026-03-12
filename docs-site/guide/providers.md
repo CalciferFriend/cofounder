@@ -41,7 +41,7 @@ By default, his-and-hers routes lightweight tasks (summarization, task planning,
   "cost_routing": {
     "lightweight": "claude-haiku-3-5",
     "standard": "claude-sonnet-4-5",
-    "heavy": "jerry"
+    "heavy": "h2"
   }
 }
 ```
@@ -77,7 +77,7 @@ Select **OpenAI** during `hh onboard`. Your API key goes to the OS keychain.
   "cost_routing": {
     "lightweight": "gpt-4o-mini",
     "standard": "gpt-4o",
-    "heavy": "jerry"
+    "heavy": "h2"
   }
 }
 ```
@@ -216,7 +216,7 @@ H1 can use different providers depending on task cost and routing policy:
     "lightweight_model": "claude-haiku-3-5",
     "standard_provider": "anthropic",
     "standard_model": "claude-sonnet-4-5",
-    "heavy_route": "jerry"
+    "heavy_route": "h2"
   }
 }
 ```

@@ -8,7 +8,7 @@
  *   2. Resolve peer (--peer <name>)
  *   Step 1 — Tailscale reachability: ping peer tailscale IP
  *   Step 2 — Gateway health: check /health endpoint
- *   Step 3 — Round-trip message: send a TJWakeMessage, measure RTT
+ *   Step 3 — Round-trip message: send a HHWakeMessage, measure RTT
  *   3. Print summary table (green ✓ pass / red ✗ fail)
  *   4. Exit code 0 if all pass, 1 if any fail
  *   5. --json: output results as JSON
@@ -32,7 +32,7 @@ interface StepResult {
   error?: string;
 }
 
-export async function tjTest(opts: TestOptions = {}) {
+export async function hhTest(opts: TestOptions = {}) {
   const config = await loadConfig();
 
   if (!config) {

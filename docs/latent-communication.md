@@ -6,7 +6,7 @@
 
 1. [Overview](#overview)
 2. [Why Latent Communication](#why-latent-communication)
-3. [How HHLatentMessage Works](#how-tjlatentmessage-works)
+3. [How HHLatentMessage Works](#how-hhlatentmessage-works)
 4. [Two Communication Modes](#two-communication-modes)
 5. [Protocol Specification](#protocol-specification)
 6. [Implementation Paths](#implementation-paths)

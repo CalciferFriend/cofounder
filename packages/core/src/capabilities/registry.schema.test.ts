@@ -81,7 +81,7 @@ describe("latent fields", () => {
     expect(report.latent_support).toBe(true);
   });
 
-  it('"latent-comm" is a valid TJSkillTag', () => {
+  it('"latent-comm" is a valid HHSkillTag', () => {
     const report = HHCapabilityReport.parse({
       node: "GLaDOS",
       skills: ["latent-comm"],

@@ -92,7 +92,7 @@ $ hh status --json
 ```json
 {
   "version": "0.5.2",
-  "tom": {
+  "h1": {
     "name": "Calcifer",
     "emoji": "🔥",
     "tailscale_ip": "100.x.y.z",

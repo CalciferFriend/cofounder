@@ -6,8 +6,8 @@ import { z } from "zod";
  */
 export const HHHandoff = z.object({
   task_id: z.string().uuid(),
-  from_role: z.enum(["tom", "jerry"]),
-  to_role: z.enum(["tom", "jerry"]),
+  from_role: z.enum(["h1", "h2"]),
+  to_role: z.enum(["h1", "h2"]),
   objective: z.string(),
   context: z.string().optional(),
   constraints: z.array(z.string()).default([]),

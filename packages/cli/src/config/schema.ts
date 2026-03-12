@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const NodeRole = z.enum(["tom", "jerry"]);
+export const NodeRole = z.enum(["h1", "h2"]);
 export type NodeRole = z.infer<typeof NodeRole>;
 
 export const WOLConfig = z.object({
@@ -22,7 +22,7 @@ export const GatewayConfig = z.object({
   gateway_token: z.string().optional(),
 });
 
-/** Model provider config — persisted to TJConfig, API keys stored in keychain */
+/** Model provider config — persisted to HHConfig, API keys stored in keychain */
 export const ProviderConfig = z.object({
   kind: z.enum(["anthropic", "openai", "ollama", "lmstudio", "custom"]),
   /** Model id, e.g. "claude-sonnet-4-6" or "llama3.2" */
@@ -78,7 +78,7 @@ export const ProtocolConfig = z.object({
   message_format: z.enum(["json", "markdown"]).default("json"),
 });
 
-export const TJConfig = z.object({
+export const HHConfig = z.object({
   version: z.string().default("0.1.0"),
   this_node: NodeConfig,
   /** Primary peer node (backwards-compatible single-peer config) */
@@ -96,13 +96,13 @@ export const TJConfig = z.object({
   /** Last confirmed heartbeat from peer (ISO datetime) */
   last_heartbeat: z.string().datetime().optional(),
   openclaw: z.object({
-    session_tom: z.string().optional(),
-    session_jerry: z.string().optional(),
+    session_h1: z.string().optional(),
+    session_h2: z.string().optional(),
     /** Path to openclaw.json on this machine */
     config_path: z.string().optional(),
   }).optional(),
 });
-export type TJConfig = z.infer<typeof TJConfig>;
+export type HHConfig = z.infer<typeof HHConfig>;
 
 /** Helper: build a ProviderConfig with sensible defaults for a given kind */
 export function buildProviderConfig(

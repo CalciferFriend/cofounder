@@ -16,8 +16,8 @@ It is carried in a `HHMessage` with `type: "handoff"`.
 ```typescript
 interface HHHandoff {
   task_id: string;               // UUID v4 — stable identifier for this handoff
-  from_role: "h1" | "jerry";    // Who is delegating
-  to_role: "h1" | "jerry";      // Who should execute
+  from_role: "h1" | "h2";    // Who is delegating
+  to_role": "h2";      // Who should execute
   objective: string;             // Clear description of the task
   context: string;               // Background information
   constraints: string[];         // Rules and boundaries for execution
@@ -35,8 +35,8 @@ interface HHHandoff {
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `task_id` | `string` | ✓ | UUID v4 — used to correlate results back to this handoff |
-| `from_role` | `"tom" \| "jerry"` | ✓ | The role delegating the task |
-| `to_role` | `"tom" \| "jerry"` | ✓ | The role that should execute |
+| `from_role": "h1" \|`"h1" | "h2"` | ✓ | The role delegating the task |
+| `to_role": "h2"` | ✓ | The role that should execute |
 | `objective` | `string` | ✓ | Clear, unambiguous task description |
 | `context` | `string` | ✓ | Background info to help the executor understand scope |
 | `constraints` | `string[]` | ✓ | List of rules and boundaries (can be empty `[]`) |
@@ -52,8 +52,8 @@ interface HHHandoff {
 ```json
 {
   "task_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "from_role": "tom",
-  "to_role": "jerry",
+  "from_role": "h1",
+  "to_role": "h2",
   "objective": "Generate three product images for a wireless keyboard.",
   "context": "The product is the Keychron K2 Pro in white. Customer target: professional home office users.",
   "constraints": [
@@ -76,8 +76,8 @@ interface HHHandoff {
 ```json
 {
   "task_id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
-  "from_role": "tom",
-  "to_role": "jerry",
+  "from_role": "h1",
+  "to_role": "h2",
   "objective": "Review the pull request diff and identify bugs or regressions.",
   "context": "This PR adds the HHHandoff discriminated union to the Zod schema. Prior schema used a plain string payload field.",
   "constraints": [
@@ -99,8 +99,8 @@ interface HHHandoff {
 ```json
 {
   "task_id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
-  "from_role": "tom",
-  "to_role": "jerry",
+  "from_role": "h1",
+  "to_role": "h2",
   "objective": "Run the nightly fine-tuning job and shut down when complete.",
   "context": "Dataset: /data/finetune-2026-03-12.jsonl. Base model: llama3:8b.",
   "constraints": [

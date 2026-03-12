@@ -124,7 +124,7 @@ his-and-hers can automatically route tasks to minimize cloud spend. Set threshol
     "lightweight_model": "claude-haiku-3-5",
     "standard_provider": "anthropic",
     "standard_model": "claude-sonnet-4-5",
-    "heavy_route": "jerry"
+    "heavy_route": "h2"
   }
 }
 ```

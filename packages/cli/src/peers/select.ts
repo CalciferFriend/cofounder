@@ -14,7 +14,7 @@
  * then additionals in declaration order.
  */
 
-import type { TJConfig, PeerNodeConfig } from "../config/schema.ts";
+import type { HHConfig, PeerNodeConfig } from "../config/schema.ts";
 import { loadPeerCapabilities } from "@his-and-hers/core";
 
 export type { PeerNodeConfig };
@@ -22,7 +22,7 @@ export type { PeerNodeConfig };
 /**
  * Return all configured peers: primary peer_node first, then peer_nodes[].
  */
-export function getAllPeers(config: TJConfig): PeerNodeConfig[] {
+export function getAllPeers(config: HHConfig): PeerNodeConfig[] {
   const peers: PeerNodeConfig[] = [config.peer_node];
   if (config.peer_nodes && config.peer_nodes.length > 0) {
     peers.push(...config.peer_nodes);
@@ -34,7 +34,7 @@ export function getAllPeers(config: TJConfig): PeerNodeConfig[] {
  * Resolve a peer by name (case-insensitive).
  * Returns the matching peer or null if not found.
  */
-export function findPeerByName(config: TJConfig, name: string): PeerNodeConfig | null {
+export function findPeerByName(config: HHConfig, name: string): PeerNodeConfig | null {
   const lower = name.toLowerCase();
   return getAllPeers(config).find((p) => p.name.toLowerCase() === lower) ?? null;
 }
@@ -42,11 +42,11 @@ export function findPeerByName(config: TJConfig, name: string): PeerNodeConfig |
 /**
  * Get a peer for use in a send operation.
  *
- * @param config   - Current TJConfig
+ * @param config   - Current HHConfig
  * @param peerName - If provided, resolve by name (throws if not found).
  *                   If omitted, returns the primary peer_node.
  */
-export function getPeer(config: TJConfig, peerName?: string): PeerNodeConfig {
+export function getPeer(config: HHConfig, peerName?: string): PeerNodeConfig {
   if (!peerName) {
     return config.peer_node;
   }
@@ -82,7 +82,7 @@ const OLLAMA_KEYWORDS = [
  *
  * This is a fast, synchronous scoring pass on cached data — no network calls.
  */
-export async function selectBestPeer(config: TJConfig, task: string): Promise<PeerNodeConfig> {
+export async function selectBestPeer(config: HHConfig, task: string): Promise<PeerNodeConfig> {
   const peers = getAllPeers(config);
   if (peers.length === 1) return peers[0]!;
 
@@ -138,7 +138,7 @@ export async function selectBestPeer(config: TJConfig, task: string): Promise<Pe
 /**
  * Format a peer list for display in CLI output.
  */
-export function formatPeerList(config: TJConfig): string {
+export function formatPeerList(config: HHConfig): string {
   const peers = getAllPeers(config);
   return peers
     .map((p, i) => `  ${i === 0 ? "*" : " "} ${p.emoji ?? "🤖"} ${p.name} (${p.tailscale_ip})${i === 0 ? " [primary]" : ""}`)

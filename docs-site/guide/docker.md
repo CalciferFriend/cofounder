@@ -13,14 +13,14 @@ docker run -d \
   --name h1 \
   --restart unless-stopped \
   -e ANTHROPIC_API_KEY=sk-ant-... \
-  -e TJ_ROLE=h1 \
+  -e HH_ROLE=h1 \
   -e HH_NAME="Calcifer" \
   -e TJ_EMOJI="🔥" \
   -e TS_AUTHKEY=tskey-auth-... \
   -e JERRY_TAILSCALE_IP=100.x.y.z \
   -e JERRY_SSH_USER=ubuntu \
   -v hh-h1-data:/root/.his-and-hers \
-  calcifierai/tom:latest
+  calcifierai/h1:latest
 ```
 
 First boot: the container runs `hh onboard --non-interactive` and registers with Tailscale automatically.
@@ -30,12 +30,12 @@ First boot: the container runs `hh onboard --non-interactive` and registers with
 ```yaml
 # docker-compose.yml
 services:
-  tom:
-    image: calcifierai/tom:latest
+  h1:
+    image: calcifierai/h1:latest
     container_name: h1
     restart: unless-stopped
     environment:
-      - TJ_ROLE=h1
+      - HH_ROLE=h1
       - HH_NAME=${H1_NAME:-Calcifer}
       - TJ_EMOJI=${TOM_EMOJI:-🔥}
       - TS_AUTHKEY=${TS_AUTHKEY}
@@ -45,7 +45,7 @@ services:
       - JERRY_SSH_USER=${JERRY_SSH_USER:-ubuntu}
       - GATEWAY_PORT=${GATEWAY_PORT:-3737}
     volumes:
-      - tom-data:/root/.his-and-hers
+      - h1-data:/root/.his-and-hers
       - ~/.ssh:/root/.ssh:ro   # SSH keys for connecting to H2
     cap_add:
       - NET_ADMIN   # needed for Tailscale
@@ -53,7 +53,7 @@ services:
       - /dev/net/tun:/dev/net/tun
 
 volumes:
-  tom-data:
+  h1-data:
 ```
 
 Create `.env`:
@@ -79,12 +79,12 @@ For always-on lightweight compute: embeddings, small models, summarization.
 # docker-compose.yml (add alongside H1 or standalone)
 services:
   h2-cpu:
-    image: calcifierai/jerry:cpu
+    image: calcifierai/h2:cpu
     container_name: h2-cpu
     restart: unless-stopped
     profiles: ["h2-cpu"]
     environment:
-      - TJ_ROLE=h2
+      - HH_ROLE=h2
       - HH_NAME=${H2_NAME:-H2}
       - TJ_EMOJI=${JERRY_EMOJI:-🤖}
       - TS_AUTHKEY=${TS_AUTHKEY}
@@ -150,7 +150,7 @@ docker run -d \
   --name h2-cuda \
   --restart unless-stopped \
   --gpus all \
-  -e TJ_ROLE=h2 \
+  -e HH_ROLE=h2 \
   -e HH_NAME="GLaDOS" \
   -e TJ_EMOJI="🤖" \
   -e TS_AUTHKEY=tskey-auth-... \
@@ -180,7 +180,7 @@ services:
               count: all
               capabilities: [gpu]
     environment:
-      - TJ_ROLE=h2
+      - HH_ROLE=h2
       - HH_NAME=${H2_NAME:-GLaDOS}
       - TJ_EMOJI=${JERRY_EMOJI:-🤖}
       - TS_AUTHKEY=${TS_AUTHKEY}
@@ -227,7 +227,7 @@ Use quantized models (`llama3.2:3b-q4_0`) to fit in the Pi's RAM.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `TJ_ROLE` | — | `tom` or `jerry` (required) |
+| `HH_ROLE` | — | `h1` or `h2` (required) |
 | `HH_NAME` | `H1` / `H2` | Node display name |
 | `TJ_EMOJI` | `🔥` / `🤖` | Node emoji |
 | `TS_AUTHKEY` | — | Tailscale auth key (required) |

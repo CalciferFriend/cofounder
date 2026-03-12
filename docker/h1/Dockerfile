@@ -2,7 +2,7 @@
 # Alpine + Node 22 + Tailscale + OpenClaw + his-and-hers
 #
 # Usage:
-#   docker build -t calcifer-ai/h1 -f docker/tom/Dockerfile .
+#   docker build -t calcifer-ai/h1 -f docker/h1/Dockerfile .
 #   docker run -d \
 #     -e ANTHROPIC_API_KEY=sk-ant-... \
 #     -e TS_AUTHKEY=tskey-auth-... \
@@ -36,8 +36,8 @@ RUN npm install -g his-and-hers
 RUN mkdir -p /root/.openclaw /root/.his-and-hers
 
 # ── Entrypoint scripts ────────────────────────────────────────────────────────
-COPY docker/tom/entrypoint.sh /entrypoint.sh
-COPY docker/tom/start-gateway.sh /start-gateway.sh
+COPY docker/h1/entrypoint.sh /entrypoint.sh
+COPY docker/h1/start-gateway.sh /start-gateway.sh
 RUN chmod +x /entrypoint.sh /start-gateway.sh
 
 # ── Ports ─────────────────────────────────────────────────────────────────────

@@ -122,7 +122,7 @@ if [ ! -f /root/.his-and-hers/config.json ]; then
   "version": "0.1.0",
   "gateway_port": $JERRY_GATEWAY_PORT,
   "this_node": {
-    "role": "jerry",
+    "role": "h2",
     "name": "$H2_NAME",
     "emoji": "$JERRY_EMOJI",
     "tailscale_hostname": "${TS_HOSTNAME}",
@@ -134,7 +134,7 @@ if [ ! -f /root/.his-and-hers/config.json ]; then
     }
   },
   "peer_node": {
-    "role": "tom",
+    "role": "h1",
     "name": "${H1_NAME:-H1}",
     "emoji": "${TOM_EMOJI:-🐱}",
     "tailscale_hostname": "${TOM_TAILSCALE_HOSTNAME:-}",

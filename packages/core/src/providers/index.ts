@@ -115,11 +115,11 @@ export async function detectOllamaModels(
 
 /**
  * Cost routing hint: for a given task description, suggest which node
- * (tom/jerry) and which provider makes sense.
+ * (h1/h2) and which provider makes sense.
  *
  * This is a simple heuristic — Phase 3 will make this smarter.
  */
-export type RoutingHint = "tom-cloud" | "h2-local" | "h2-cloud";
+export type RoutingHint = "h1-cloud" | "h2-local" | "h2-cloud";
 
 export function suggestRouting(task: string): RoutingHint {
   const lower = task.toLowerCase();
@@ -128,5 +128,5 @@ export function suggestRouting(task: string): RoutingHint {
     "fine-tune", "train", "embed", "inference", "diffusion", "whisper",
   ];
   const isHeavy = heavyKeywords.some((kw) => lower.includes(kw));
-  return isHeavy ? "h2-local" : "tom-cloud";
+  return isHeavy ? "h2-local" : "h1-cloud";
 }

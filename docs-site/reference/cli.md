@@ -195,5 +195,5 @@ Manually send a heartbeat to H1 (typically run automatically by H2's gateway).
 
 ```bash
 hh heartbeat
-hh heartbeat --peer tom-name
+hh heartbeat --peer h1-name
 ```

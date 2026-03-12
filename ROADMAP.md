@@ -63,7 +63,7 @@
 ### 2f. Docker H1 template (Calcifer) ✅ (2026-03-11)
 - [x] `Dockerfile` for H1 node (Alpine + Node + OpenClaw + his-and-hers)
 - [x] `docker-compose.yml` with env-var config
-- [x] One-liner: `docker run -e ANTHROPIC_API_KEY=... calcifierai/tom`
+- [x] One-liner: `docker run -e ANTHROPIC_API_KEY=... calcifierai/h1`
 - [x] Auto-registers with Tailscale on first boot (entrypoint.sh)
 
 ### 2g. HHMessage discriminated union (both) ✅ (2026-03-11)

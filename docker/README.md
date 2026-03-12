@@ -15,7 +15,7 @@ git clone https://github.com/CalciferFriend/his-and-hers
 cd his-and-hers
 
 # Build the image
-docker build -t calcifer-ai/h1 -f docker/tom/Dockerfile .
+docker build -t calcifer-ai/h1 -f docker/h1/Dockerfile .
 ```
 
 ### 2. Configure
@@ -80,7 +80,7 @@ H2 can now send messages to H1's Tailscale IP without any public port exposure.
 | Volume | Purpose |
 |--------|---------|
 | `tailscale-state` | Tailscale machine identity (avoids re-auth on restart) |
-| `tom-openclaw` | OpenClaw config + agent state |
+| `h1-openclaw` | OpenClaw config + agent state |
 | `his-and-hers-config` | his-and-hers config (peer info, pairing code, etc.) |
 
 ## SSH key for H2
@@ -119,8 +119,8 @@ Add the public key to H2's `~/.ssh/authorized_keys`.
 ## Publishing to Docker Hub
 
 ```bash
-docker tag calcifer-ai/h1 calcifierai/tom:latest
-docker push calcifierai/tom:latest
+docker tag calcifer-ai/h1 calcifierai/h1:latest
+docker push calcifierai/h1:latest
 ```
 
 One-liner for users:

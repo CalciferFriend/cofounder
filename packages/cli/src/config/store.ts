@@ -1,7 +1,7 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { TJConfig, type ProviderConfig } from "./schema.ts";
+import { HHConfig, type ProviderConfig } from "./schema.ts";
 
 const CONFIG_DIR = join(homedir(), ".his-and-hers");
 const CONFIG_PATH = join(CONFIG_DIR, "hh.json");
@@ -10,10 +10,10 @@ const CONFIG_PATH = join(CONFIG_DIR, "hh.json");
  * Load config from ~/.his-and-hers/hh.json
  * Returns null if not found or invalid.
  */
-export async function loadConfig(): Promise<TJConfig | null> {
+export async function loadConfig(): Promise<HHConfig | null> {
   try {
     const raw = await readFile(CONFIG_PATH, "utf-8");
-    return TJConfig.parse(JSON.parse(raw));
+    return HHConfig.parse(JSON.parse(raw));
   } catch {
     return null;
   }
@@ -23,7 +23,7 @@ export async function loadConfig(): Promise<TJConfig | null> {
  * Save config to ~/.his-and-hers/hh.json with restrictive permissions (0600).
  * Never writes API keys — those stay in the OS keychain.
  */
-export async function saveConfig(config: TJConfig): Promise<void> {
+export async function saveConfig(config: HHConfig): Promise<void> {
   await mkdir(CONFIG_DIR, { recursive: true });
   // Strip runtime secrets before writing
   const safe = stripRuntimeSecrets(config);
@@ -36,10 +36,10 @@ export async function saveConfig(config: TJConfig): Promise<void> {
  * Patch an existing config with partial updates and save.
  * Merges top-level keys; use for incremental wizard step writes.
  */
-export async function patchConfig(patch: Partial<TJConfig>): Promise<TJConfig> {
+export async function patchConfig(patch: Partial<HHConfig>): Promise<HHConfig> {
   const existing = await loadConfig();
   if (!existing) throw new Error("No config found — run hh onboard first");
-  const merged = TJConfig.parse({ ...existing, ...patch });
+  const merged = HHConfig.parse({ ...existing, ...patch });
   await saveConfig(merged);
   return merged;
 }
@@ -68,7 +68,7 @@ export function getConfigPath(): string {
  * Remove runtime-only secrets before writing to disk.
  * API keys live in the OS keychain; gateway tokens are loaded at runtime.
  */
-function stripRuntimeSecrets(config: TJConfig): TJConfig {
+function stripRuntimeSecrets(config: HHConfig): HHConfig {
   return {
     ...config,
     peer_node: {

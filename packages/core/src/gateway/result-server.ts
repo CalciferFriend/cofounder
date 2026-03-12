@@ -11,7 +11,7 @@
  *   ─────                                        ─────
  *   hh send --wait  →  starts result server       receives wakeAgent msg
  *   POST /result (port auto-selected)             processes task
- *   ←── delivery URL included in wake msg        calls: POST <tom-webhook-url>/result
+ *   ←── delivery URL included in wake msg        calls: POST <h1-webhook-url>/result
  *   server receives result, resolves              closes its task state, done
  *
  * ## Security

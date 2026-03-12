@@ -2,7 +2,7 @@ import * as p from "@clack/prompts";
 import pc from "picocolors";
 import { generatePairingCode, hashPairingCode } from "@his-and-hers/core";
 import { saveConfig, getConfigPath } from "../../config/store.ts";
-import type { TJConfig } from "../../config/schema.ts";
+import type { HHConfig } from "../../config/schema.ts";
 import type { WizardContext } from "../context.ts";
 
 export async function stepFinalize(ctx: Partial<WizardContext>): Promise<Partial<WizardContext>> {
@@ -13,9 +13,9 @@ export async function stepFinalize(ctx: Partial<WizardContext>): Promise<Partial
   const pairingCode = generatePairingCode();
   const pairingCodeHash = hashPairingCode(pairingCode);
 
-  const peerRole = ctx.role === "h1" ? "jerry" : "tom";
+  const peerRole = ctx.role === "h1" ? "h2" : "h1";
 
-  const config: TJConfig = {
+  const config: HHConfig = {
     version: "0.1.0",
     gateway_port: 18789,
     this_node: {

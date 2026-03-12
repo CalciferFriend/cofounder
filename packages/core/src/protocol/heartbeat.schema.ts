@@ -5,7 +5,7 @@ import { z } from "zod";
  */
 export const HHHeartbeat = z.object({
   from: z.string(),
-  role: z.enum(["tom", "jerry"]),
+  role: z.enum(["h1", "h2"]),
   tailscale_ip: z.string(),
   gateway_port: z.number().int().default(18789),
   gateway_healthy: z.boolean(),

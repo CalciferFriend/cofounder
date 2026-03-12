@@ -56,7 +56,7 @@ async function restartLocalGateway(): Promise<boolean> {
 export async function stepGatewayBind(ctx: Partial<WizardContext>): Promise<Partial<WizardContext>> {
   const role = ctx.role!;
   const defaults = ROLE_DEFAULTS[role];
-  const peerRole = role === "h1" ? "jerry" : "tom";
+  const peerRole = role === "h1" ? "h2" : "h1";
   const peerDefaults = ROLE_DEFAULTS[peerRole];
 
   // ── Step 1: choose bind mode for THIS node ────────────────────────────────

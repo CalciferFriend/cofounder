@@ -17,31 +17,31 @@ needing to interrogate H2 on every task.
 interface HHCapabilityReport {
   version: string;              // Schema version (semver)
   node: string;                 // Node name
-  role: "h2";                // Always "jerry" — H1 doesn't advertise capabilities
+  role: "h2";                // Always "h2" — H1 doesn't advertise capabilities
   hardware: string | null;      // Hardware profile identifier (e.g. "rtx-4090")
   os: string;                   // "linux" | "win32" | "darwin"
-  gpu: TJGpuInfo | null;        // GPU details, or null if CPU-only
+  gpu: HHGpuInfo | null;        // GPU details, or null if CPU-only
   ollama_running: boolean;      // Whether Ollama is running
-  ollama_models: TJOllamaModel[];  // Installed Ollama models
-  services: TJServices;         // Detected services (ComfyUI, A1111, etc.)
+  ollama_models: HHOllamaModel[];  // Installed Ollama models
+  services: HHServices;         // Detected services (ComfyUI, A1111, etc.)
   skill_tags: string[];         // Capability tags for routing
   custom_notes: string | null;  // Free-form notes (from --notes flag)
   timestamp: string;            // ISO 8601 datetime of last scan
 }
 
-interface TJGpuInfo {
+interface HHGpuInfo {
   name: string;          // e.g. "NVIDIA GeForce RTX 4090"
   vram_gb: number;       // VRAM in gigabytes
   backend: "cuda" | "rocm" | "metal" | "cpu";
   cuda_version?: string; // e.g. "12.3" (CUDA only)
 }
 
-interface TJOllamaModel {
+interface HHOllamaModel {
   name: string;       // e.g. "llama3:70b-instruct-q4_0"
   size_gb: number;    // Model size on disk in GB
 }
 
-interface TJServices {
+interface HHServices {
   comfyui: boolean;   // ComfyUI detected on port 8188
   a1111: boolean;     // AUTOMATIC1111 detected on port 7860
   lmstudio: boolean;  // LM Studio detected on port 1234
@@ -59,18 +59,18 @@ interface TJServices {
 |-------|------|----------|-------------|
 | `version` | `string` | ✓ | Schema version, e.g. `"0.1.0"` |
 | `node` | `string` | ✓ | Node name (from `hh.json`) |
-| `role` | `"jerry"` | ✓ | Always `"jerry"` |
+| `role` | `"h2"` | ✓ | Always `"h2"` |
 | `hardware` | `string \| null` | – | Profile ID: `"pi5"`, `"rtx-3070-ti"`, `"rtx-4090"`, `"m2-mac"`, or `null` |
 | `os` | `string` | ✓ | OS platform: `"linux"`, `"win32"`, `"darwin"` |
-| `gpu` | `TJGpuInfo \| null` | – | GPU details from `nvidia-smi` / `rocm-smi` / Metal probe |
+| `gpu` | `HHGpuInfo \| null` | – | GPU details from `nvidia-smi` / `rocm-smi` / Metal probe |
 | `ollama_running` | `boolean` | ✓ | Whether Ollama is reachable at `localhost:11434` |
-| `ollama_models` | `TJOllamaModel[]` | ✓ | Models returned by `GET /api/tags` |
-| `services` | `TJServices` | ✓ | Detected inference services |
+| `ollama_models` | `HHOllamaModel[]` | ✓ | Models returned by `GET /api/tags` |
+| `services` | `HHServices` | ✓ | Detected inference services |
 | `skill_tags` | `string[]` | ✓ | Tags H1 uses for routing decisions |
 | `custom_notes` | `string \| null` | – | Free-form notes from `hh capabilities advertise --notes` |
 | `timestamp` | `string` | ✓ | ISO 8601 datetime of last capability scan |
 
-### TJGpuInfo
+### HHGpuInfo
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -108,7 +108,7 @@ Custom tags can be added with `hh capabilities advertise --tags "finetune,custom
 {
   "version": "0.1.0",
   "node": "h2-beast",
-  "role": "jerry",
+  "role": "h2",
   "hardware": "rtx-4090",
   "os": "linux",
   "gpu": {
@@ -144,7 +144,7 @@ Custom tags can be added with `hh capabilities advertise --tags "finetune,custom
 {
   "version": "0.1.0",
   "node": "h2-pi",
-  "role": "jerry",
+  "role": "h2",
   "hardware": "pi5",
   "os": "linux",
   "gpu": null,

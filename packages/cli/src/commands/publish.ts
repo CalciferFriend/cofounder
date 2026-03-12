@@ -31,7 +31,7 @@ export interface HHNodeCard {
   /** ISO datetime when this card was published */
   published_at: string;
   /** h1 (orchestrator, always-on) or h2 (executor, powerful PC) */
-  role: "h1" | "jerry";
+  role: "h1" | "h2";
   /** Display name (user-provided — can be anything) */
   name: string;
   emoji?: string;

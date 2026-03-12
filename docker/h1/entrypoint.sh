@@ -32,7 +32,7 @@ done
 # Authenticate
 tailscale up \
   --authkey="$TS_AUTHKEY" \
-  --hostname="${H1_NAME,,}-tom-docker" \
+  --hostname="${H1_NAME,,}-h1-docker" \
   --accept-routes \
   --accept-dns \
   --timeout=30s
@@ -82,10 +82,10 @@ if [ ! -f /root/.his-and-hers/config.json ]; then
   "version": "0.1.0",
   "gateway_port": $TOM_GATEWAY_PORT,
   "this_node": {
-    "role": "tom",
+    "role": "h1",
     "name": "$H1_NAME",
     "emoji": "$TOM_EMOJI",
-    "tailscale_hostname": "${TS_HOSTNAME:-tom-docker}",
+    "tailscale_hostname": "${TS_HOSTNAME:-h1-docker}",
     "tailscale_ip": "${TAILSCALE_IP:-127.0.0.1}",
     "provider": {
       "kind": "anthropic",
@@ -94,7 +94,7 @@ if [ ! -f /root/.his-and-hers/config.json ]; then
     }
   },
   "peer_node": {
-    "role": "jerry",
+    "role": "h2",
     "name": "H2",
     "emoji": "🐭",
     "tailscale_hostname": "${JERRY_TAILSCALE_HOSTNAME:-}",

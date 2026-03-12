@@ -39,7 +39,7 @@ If you don't have one:
 
 ```bash
 # Run on H1's machine
-ssh-keygen -t ed25519 -C "tom-to-jerry"
+ssh-keygen -t ed25519 -C "h1-to-h2"
 # Default: ~/.ssh/id_ed25519
 
 # Copy public key to H2
@@ -104,7 +104,7 @@ tailscale status      # must show both machines
 openclaw --version    # must succeed
 
 # On H1:
-ssh jerry@100.x.y.z  # must connect without password prompt
+ssh h2-user@100.x.y.z  # must connect without password prompt
 
 # On H2:
 ollama list           # should show at least one model

@@ -94,7 +94,7 @@ Output:
 ```json
 {
   "node": "GLaDOS",
-  "role": "jerry",
+  "role": "h2",
   "hardware": "rtx-3070-ti",
   "gpu": {
     "name": "NVIDIA GeForce RTX 3070 Ti",

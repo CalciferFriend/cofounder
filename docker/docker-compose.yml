@@ -23,11 +23,11 @@ name: his-and-hers
 
 # ─── H1 (orchestrator) ───────────────────────────────────────────────────────
 services:
-  tom:
+  h1:
     build:
       context: ..
-      dockerfile: docker/tom/Dockerfile
-    image: calcifer-ai/tom:latest
+      dockerfile: docker/h1/Dockerfile
+    image: calcifer-ai/h1:latest
     container_name: h1
     restart: unless-stopped
 
@@ -63,8 +63,8 @@ services:
       JERRY_WOL_BROADCAST: "${JERRY_WOL_BROADCAST:-}"
 
     volumes:
-      - tailscale-tom:/var/lib/tailscale
-      - tom-openclaw:/root/.openclaw
+      - tailscale-h1:/var/lib/tailscale
+      - h1-openclaw:/root/.openclaw
       - his-and-hers-config:/root/.his-and-hers
       # Mount SSH key if using SSH to H2:
       # - ./ssh/id_ed25519:/root/.ssh/id_ed25519:ro
@@ -88,7 +88,7 @@ services:
     build:
       context: ..
       dockerfile: docker/h2/Dockerfile
-    image: calcifer-ai/jerry:latest
+    image: calcifer-ai/h2:latest
     container_name: h2
     restart: unless-stopped
 
@@ -119,7 +119,7 @@ services:
       TOM_SSH_PUBKEY: "${TOM_SSH_PUBKEY:-}"
 
     volumes:
-      - tailscale-jerry:/var/lib/tailscale
+      - tailscale-h2:/var/lib/tailscale
       - h2-openclaw:/root/.openclaw
       - h2-hh-config:/root/.his-and-hers
       - h2-ollama:/root/.ollama  # persist downloaded models
@@ -180,7 +180,7 @@ services:
       TOM_SSH_PUBKEY: "${TOM_SSH_PUBKEY:-}"
 
     volumes:
-      - tailscale-jerry:/var/lib/tailscale
+      - tailscale-h2:/var/lib/tailscale
       - h2-openclaw:/root/.openclaw
       - h2-hh-config:/root/.his-and-hers
       - h2-ollama:/root/.ollama
@@ -200,9 +200,9 @@ services:
 
 # ─── Volumes ──────────────────────────────────────────────────────────────────
 volumes:
-  tailscale-tom:
-  tailscale-jerry:
-  tom-openclaw:
+  tailscale-h1:
+  tailscale-h2:
+  h1-openclaw:
   his-and-hers-config:
   h2-openclaw:
   h2-hh-config:

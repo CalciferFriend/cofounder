@@ -118,7 +118,7 @@ For always-on H1 nodes (cloud VMs, home servers):
 sudo systemctl enable --now tailscaled
 
 # Auth with an auth key
-sudo tailscale up --authkey tskey-auth-... --hostname tom-node
+sudo tailscale up --authkey tskey-auth-... --hostname h1-node
 
 # Verify it starts on boot
 sudo reboot

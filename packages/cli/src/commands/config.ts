@@ -11,7 +11,7 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 import { loadConfig, saveConfig, patchConfig, getConfigPath } from "../config/store.ts";
-import type { TJConfig } from "../config/schema.ts";
+import type { HHConfig } from "../config/schema.ts";
 
 // ─── Sensitive field detection ────────────────────────────────────────────────
 
@@ -167,7 +167,7 @@ export async function configSet(key: string, value: string) {
   if (parts.length === 1) {
     // Top-level key — use patchConfig
     try {
-      await patchConfig({ [key]: coerced } as Partial<TJConfig>);
+      await patchConfig({ [key]: coerced } as Partial<HHConfig>);
     } catch (err) {
       p.log.error(`Failed to set ${pc.cyan(key)}: ${String(err)}`);
       process.exit(1);
@@ -180,7 +180,7 @@ export async function configSet(key: string, value: string) {
       coerced,
     );
     try {
-      await saveConfig(updated as unknown as TJConfig);
+      await saveConfig(updated as unknown as HHConfig);
     } catch (err) {
       p.log.error(`Failed to set ${pc.cyan(key)}: ${String(err)}`);
       process.exit(1);

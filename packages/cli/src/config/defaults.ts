@@ -5,12 +5,12 @@ export const ROLE_DEFAULTS: Record<NodeRole, {
   persona: string;
   bindMode: "loopback" | "tailscale";
 }> = {
-  tom: {
+  h1: {
     emoji: "🐱",
     persona: "Always-on orchestrator. Watches, delegates, never sleeps.",
     bindMode: "loopback",
   },
-  jerry: {
+  h2: {
     emoji: "🐭",
     persona: "High-powered executor. Wakes fast, works hard, disappears.",
     bindMode: "tailscale",

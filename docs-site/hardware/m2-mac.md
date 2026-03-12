@@ -101,7 +101,7 @@ hh capabilities show
 
 Expected output:
 ```
-🖥  My Mac (jerry) — macOS
+🖥  My Mac (h2) — macOS
 GPU:    Apple M2 · Metal backend · ~16 GB unified
 Ollama: running · 4 models
 Skills: ollama, gpu-inference

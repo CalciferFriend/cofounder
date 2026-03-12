@@ -99,7 +99,7 @@ hh capabilities show --peer h2-home --json
 Output:
 
 ```
-🖥  GLaDOS (jerry) — Windows
+🖥  GLaDOS (h2) — Windows
 GPU:    NVIDIA RTX 3070 Ti · 8 GB VRAM · CUDA 12.1
 Ollama: running · 3 models (llama3.2:3b, mistral:7b, codellama:7b)
 Skills: ollama, gpu-inference
@@ -111,7 +111,7 @@ JSON output:
 ```json
 {
   "node": "GLaDOS",
-  "role": "jerry",
+  "role": "h2",
   "hardware": "rtx-3070-ti",
   "gpu": {
     "name": "NVIDIA GeForce RTX 3070 Ti",
@@ -171,7 +171,7 @@ Reason: only peer with image-gen skill
 {
   "version": "0.1.0",
   "node": "GLaDOS",
-  "role": "jerry",
+  "role": "h2",
   "hardware": "rtx-3070-ti",
   "os": "win32",
   "gpu": {

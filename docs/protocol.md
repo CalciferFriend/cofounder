@@ -61,8 +61,8 @@ For structured delegation, use the HHHandoff schema:
 ```typescript
 interface HHHandoff {
   task_id: string;           // UUID v4
-  from_role: "h1" | "jerry";
-  to_role: "h1" | "jerry";
+  from_role: "h1" | "h2";
+  to_role": "h2";
   objective: string;         // Clear task description
   context: string;           // Background information
   constraints: string[];     // Rules and boundaries
@@ -78,7 +78,7 @@ interface HHHandoff {
 ```typescript
 interface HHHeartbeat {
   from: string;
-  role: "h1" | "jerry";
+  role: "h1" | "h2";
   tailscale_ip: string;
   gateway_port: number;
   gateway_healthy: boolean;

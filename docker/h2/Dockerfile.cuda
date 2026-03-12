@@ -1,16 +1,16 @@
 # Jerry node — Docker image (NVIDIA CUDA)
-# Ollama with CUDA GPU acceleration + Node 22 + Tailscale + OpenClaw + tom-and-jerry
+# Ollama with CUDA GPU acceleration + Node 22 + Tailscale + OpenClaw + his-and-hers
 #
 # Requires: nvidia-container-toolkit on the host
 # https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
 #
 # Usage:
-#   docker build -t calcifer-ai/jerry-cuda -f docker/jerry/Dockerfile.cuda .
+#   docker build -t calcifer-ai/h2-cuda -f docker/h2/Dockerfile.cuda .
 #   docker run -d --gpus all \
 #     -e TS_AUTHKEY=tskey-auth-... \
 #     -e JERRY_NAME="GLaDOS" \
 #     -e JERRY_EMOJI="🤖" \
-#     calcifer-ai/jerry-cuda
+#     calcifer-ai/h2-cuda
 #
 # Tested with: RTX 3070 Ti, RTX 3090, RTX 4090
 
@@ -51,11 +51,11 @@ RUN curl -fsSL https://ollama.com/install.sh | sh
 # ── OpenClaw ──────────────────────────────────────────────────────────────────
 RUN npm install -g openclaw
 
-# ── tom-and-jerry CLI ─────────────────────────────────────────────────────────
-RUN npm install -g tom-and-jerry
+# ── his-and-hers CLI ─────────────────────────────────────────────────────────
+RUN npm install -g his-and-hers
 
 # ── Runtime config dirs ───────────────────────────────────────────────────────
-RUN mkdir -p /root/.openclaw /root/.tom-and-jerry /root/.ollama
+RUN mkdir -p /root/.openclaw /root/.his-and-hers /root/.ollama
 
 # ── SSH server (for tj send over SSH from Tom) ────────────────────────────────
 RUN mkdir -p /root/.ssh && chmod 700 /root/.ssh
@@ -63,8 +63,8 @@ RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin prohibit-passwo
 RUN ssh-keygen -A
 
 # ── Entrypoint ────────────────────────────────────────────────────────────────
-COPY docker/jerry/entrypoint.sh /entrypoint.sh
-COPY docker/jerry/pull-models.sh /pull-models.sh
+COPY docker/h2/entrypoint.sh /entrypoint.sh
+COPY docker/h2/pull-models.sh /pull-models.sh
 RUN chmod +x /entrypoint.sh /pull-models.sh
 
 EXPOSE 18789 11434 22

@@ -37,7 +37,7 @@ Output (secrets are redacted):
 
 {
   "this_node": {
-    "role": "tom",
+    "role": "h1",
     "name": "calcifer",
     ...
   },

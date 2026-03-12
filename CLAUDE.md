@@ -28,7 +28,7 @@ packages/cli/src/
   config/         — schema.ts (Zod), store.ts (read/write), defaults.ts
 
 packages/skills/  — hh-h1, hh-h2, hh-handoff SKILL.md files
-templates/        — SOUL.md, IDENTITY.md, AGENTS.md per role (tom/jerry)
+templates/        — SOUL.md, IDENTITY.md, AGENTS.md per role (h1/h2)
 docs/             — protocol spec, reference implementation
 ```
 

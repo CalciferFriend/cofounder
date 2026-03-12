@@ -61,20 +61,20 @@ export const HHHandoffPayload = z.object({
 export type HHHandoffPayload = z.infer<typeof HHHandoffPayload>;
 
 /** Payload for type: "wake" — request peer to wake up */
-export const TJWakePayload = z.object({
+export const HHWakePayload = z.object({
   reason: z.string().optional(),
   task_preview: z.string().optional(),
 });
-export type TJWakePayload = z.infer<typeof TJWakePayload>;
+export type HHWakePayload = z.infer<typeof HHWakePayload>;
 
 /** Payload for type: "error" — protocol-level error report */
-export const TJErrorPayload = z.object({
+export const HHErrorPayload = z.object({
   code: z.string(),
   message: z.string(),
   recoverable: z.boolean().default(true),
   original_message_id: z.string().uuid().optional(),
 });
-export type TJErrorPayload = z.infer<typeof TJErrorPayload>;
+export type HHErrorPayload = z.infer<typeof HHErrorPayload>;
 
 /** Payload for type: "latent" — latent space communication via Vision Wormhole or KV cache */
 export const HHLatentPayload = z.object({
@@ -128,17 +128,17 @@ export const HHHandoffMessage = HHMessageBase.extend({
 });
 export type HHHandoffMessage = z.infer<typeof HHHandoffMessage>;
 
-export const TJWakeMessage = HHMessageBase.extend({
+export const HHWakeMessage = HHMessageBase.extend({
   type: z.literal("wake"),
-  payload: TJWakePayload,
+  payload: HHWakePayload,
 });
-export type TJWakeMessage = z.infer<typeof TJWakeMessage>;
+export type HHWakeMessage = z.infer<typeof HHWakeMessage>;
 
-export const TJErrorMessage = HHMessageBase.extend({
+export const HHErrorMessage = HHMessageBase.extend({
   type: z.literal("error"),
-  payload: TJErrorPayload,
+  payload: HHErrorPayload,
 });
-export type TJErrorMessage = z.infer<typeof TJErrorMessage>;
+export type HHErrorMessage = z.infer<typeof HHErrorMessage>;
 
 export const HHLatentMessage = HHMessageBase.extend({
   type: z.literal("latent"),
@@ -158,8 +158,8 @@ export const HHMessage = z.discriminatedUnion("type", [
   HHResultMessage,
   HHHeartbeatMessage,
   HHHandoffMessage,
-  TJWakeMessage,
-  TJErrorMessage,
+  HHWakeMessage,
+  HHErrorMessage,
   HHLatentMessage,
 ]);
 export type HHMessage = z.infer<typeof HHMessage>;
@@ -182,11 +182,11 @@ export function isHandoffMessage(msg: HHMessage): msg is HHHandoffMessage {
   return msg.type === "handoff";
 }
 
-export function isWakeMessage(msg: HHMessage): msg is TJWakeMessage {
+export function isWakeMessage(msg: HHMessage): msg is HHWakeMessage {
   return msg.type === "wake";
 }
 
-export function isErrorMessage(msg: HHMessage): msg is TJErrorMessage {
+export function isErrorMessage(msg: HHMessage): msg is HHErrorMessage {
   return msg.type === "error";
 }
 
@@ -230,8 +230,8 @@ export function createWakeMessage(
   from: string,
   to: string,
   reason?: string,
-): TJWakeMessage {
-  return TJWakeMessage.parse({ from, to, type: "wake", payload: { reason } });
+): HHWakeMessage {
+  return HHWakeMessage.parse({ from, to, type: "wake", payload: { reason } });
 }
 
 /** Build a latent message */

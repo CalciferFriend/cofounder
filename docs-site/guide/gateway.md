@@ -33,7 +33,7 @@ In `~/.his-and-hers/hh.json`:
 
 ```json
 {
-  "role": "tom",
+  "role": "h1",
   "gateway": {
     "bind": "127.0.0.1",
     "port": 3737,
@@ -60,7 +60,7 @@ H2 machine:
 
 ```json
 {
-  "role": "jerry",
+  "role": "h2",
   "gateway": {
     "bind": "100.x.y.z",
     "port": 3737,
@@ -139,7 +139,7 @@ Response:
 ```json
 {
   "status": "healthy",
-  "role": "jerry",
+  "role": "h2",
   "node": "GLaDOS",
   "uptime_seconds": 3724,
   "version": "0.5.2"

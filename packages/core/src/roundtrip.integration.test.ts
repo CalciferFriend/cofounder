@@ -69,8 +69,8 @@ async function httpPost(
   });
 }
 
-const TOM = "tom-node";
-const JERRY = "h2-node";
+const H1 = "h1-node";
+const H2 = "h2-node";
 const TOKEN = "integration-test-token";
 
 // ─── 1. Protocol: task message creation ──────────────────────────────────────
@@ -78,22 +78,22 @@ const TOKEN = "integration-test-token";
 describe("HHTaskMessage creation and validation", () => {
   it("builds a valid task message from/to", () => {
     const msg = createTaskMessage({
-      from: TOM,
-      to: JERRY,
+      from: H1,
+      to: H2,
       objective: "Summarize the attached PDF",
     });
     expect(isTaskMessage(msg)).toBe(true);
     expect(msg.type).toBe("task");
-    expect(msg.from).toBe(TOM);
-    expect(msg.to).toBe(JERRY);
+    expect(msg.from).toBe(H1);
+    expect(msg.to).toBe(H2);
     expect(msg.id).toMatch(/^[0-9a-f-]{36}$/); // UUID
     expect(msg.timestamp).toBeTruthy();
   });
 
   it("builds a task message with optional context summary", () => {
     const msg = createTaskMessage({
-      from: TOM,
-      to: JERRY,
+      from: H1,
+      to: H2,
       objective: "Render a 10s video of a spinning cube",
       context_summary: "Previous turn: asked for a still image, now upgrading to video",
     });
@@ -104,7 +104,7 @@ describe("HHTaskMessage creation and validation", () => {
   });
 
   it("task message has correct defaults", () => {
-    const msg = createTaskMessage({ from: TOM, to: JERRY, objective: "ping" });
+    const msg = createTaskMessage({ from: H1, to: H2, objective: "ping" });
     expect(msg.version).toBe("0.1.0");
     expect(msg.turn).toBe(0);
     expect(msg.done).toBe(false);
@@ -118,10 +118,10 @@ describe("HHTaskMessage creation and validation", () => {
 
 describe("HHResultMessage creation and validation", () => {
   it("builds a valid result message", () => {
-    const task = createTaskMessage({ from: TOM, to: JERRY, objective: "noop" });
+    const task = createTaskMessage({ from: H1, to: H2, objective: "noop" });
     const res = createResultMessage({
-      from: JERRY,
-      to: TOM,
+      from: H2,
+      to: H1,
       task_id: task.id,
       output: "Done! Here is the summary.",
       success: true,
@@ -135,10 +135,10 @@ describe("HHResultMessage creation and validation", () => {
   });
 
   it("result message can carry artifacts and token counts", () => {
-    const task = createTaskMessage({ from: TOM, to: JERRY, objective: "generate image" });
+    const task = createTaskMessage({ from: H1, to: H2, objective: "generate image" });
     const res = createResultMessage({
-      from: JERRY,
-      to: TOM,
+      from: H2,
+      to: H1,
       task_id: task.id,
       output: "Image saved to /tmp/output.png",
       success: true,
@@ -152,10 +152,10 @@ describe("HHResultMessage creation and validation", () => {
   });
 
   it("result message can represent a failure", () => {
-    const task = createTaskMessage({ from: TOM, to: JERRY, objective: "crash me" });
+    const task = createTaskMessage({ from: H1, to: H2, objective: "crash me" });
     const res = createResultMessage({
-      from: JERRY,
-      to: TOM,
+      from: H2,
+      to: H1,
       task_id: task.id,
       output: "",
       success: false,
@@ -289,7 +289,7 @@ describe("routeTask: heuristic routing", () => {
 
 describe("routeTask: capability-aware routing", () => {
   const baseCaps = {
-    node: "jerry",
+    node: "h2",
     os: "windows" as const,
     arch: "x64",
     gpu: { available: true, name: "RTX 3070 Ti", backend: "cuda" as const, vram_gb: 8 },
@@ -325,7 +325,7 @@ describe("routeTask: capability-aware routing", () => {
     expect(d.suggested_model).toBe("llama3.2");
   });
 
-  it("cloud for weather check even with capable jerry", () => {
+  it("cloud for weather check even with capable h2", () => {
     const d = routeTask("What is the weather today", {
       ...baseCaps,
       skills: [],

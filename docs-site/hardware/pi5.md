@@ -141,7 +141,7 @@ docker run -d \
   -e H2_NAME="h2-pi" \
   -e JERRY_EMOJI="🍓" \
   -e OLLAMA_MODELS="llama3.2:3b,nomic-embed-text" \
-  calcifer-ai/jerry:arm64
+  calcifer-ai/h2:arm64
 ```
 
 ---

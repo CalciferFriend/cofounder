@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { getAllPeers, findPeerByName, getPeer, formatPeerList } from "./select.ts";
-import type { TJConfig } from "../config/schema.ts";
+import type { HHConfig } from "../config/schema.ts";
 
 // ─── Test fixtures ────────────────────────────────────────────────────────────
 
@@ -22,7 +22,7 @@ const PRIMARY = makePeer("GLaDOS", "100.100.1.1", "🤖");
 const SECOND = makePeer("Bender", "100.100.1.2", "🦾");
 const THIRD = makePeer("HAL", "100.100.1.3", "🔴");
 
-function makeConfig(extraPeers?: typeof PRIMARY[]): TJConfig {
+function makeConfig(extraPeers?: typeof PRIMARY[]): HHConfig {
   return {
     version: "0.1.0",
     this_node: {
@@ -35,7 +35,7 @@ function makeConfig(extraPeers?: typeof PRIMARY[]): TJConfig {
     peer_node: PRIMARY,
     peer_nodes: extraPeers,
     gateway_port: 18789,
-  } as unknown as TJConfig;
+  } as unknown as HHConfig;
 }
 
 // ─── getAllPeers ──────────────────────────────────────────────────────────────

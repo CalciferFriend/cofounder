@@ -129,7 +129,7 @@ $ hh pair --code 847291 --json
   "status": "paired",
   "peer": {
     "name": "h2-home",
-    "role": "jerry",
+    "role": "h2",
     "tailscale_ip": "100.a.b.c",
     "gateway_port": 3737,
     "ssh_key_fingerprint": "SHA256:abc123..."

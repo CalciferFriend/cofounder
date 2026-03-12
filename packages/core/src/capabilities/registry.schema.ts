@@ -10,7 +10,7 @@
 
 import { z } from "zod";
 
-export const TJGPUInfo = z.object({
+export const HHGPUInfo = z.object({
   available: z.boolean(),
   /** VRAM in gigabytes, if detectable */
   vram_gb: z.number().nonnegative().optional(),
@@ -19,16 +19,16 @@ export const TJGPUInfo = z.object({
   /** Detected driver/backend: cuda, rocm, metal, none */
   backend: z.enum(["cuda", "rocm", "metal", "none"]).optional(),
 });
-export type TJGPUInfo = z.infer<typeof TJGPUInfo>;
+export type HHGPUInfo = z.infer<typeof HHGPUInfo>;
 
-export const TJOllamaInfo = z.object({
+export const HHOllamaInfo = z.object({
   running: z.boolean(),
   /** Base URL of Ollama server */
   base_url: z.string().default("http://localhost:11434"),
   /** List of downloaded model IDs, e.g. ["llama3.2", "codellama:7b"] */
   models: z.array(z.string()).default([]),
 });
-export type TJOllamaInfo = z.infer<typeof TJOllamaInfo>;
+export type HHOllamaInfo = z.infer<typeof HHOllamaInfo>;
 
 /**
  * Skill tags H2 can advertise. H1 uses these for routing hints.
@@ -44,7 +44,7 @@ export type TJOllamaInfo = z.infer<typeof TJOllamaInfo>;
  *   - "tts"            → local text-to-speech
  *   - "latent-comm"    → supports Vision Wormhole / LatentMAS latent communication
  */
-export const TJSkillTag = z.enum([
+export const HHSkillTag = z.enum([
   "image-gen",
   "transcription",
   "code-exec",
@@ -57,26 +57,26 @@ export const TJSkillTag = z.enum([
   "browser-automation",
   "latent-comm",
 ]);
-export type TJSkillTag = z.infer<typeof TJSkillTag>;
+export type HHSkillTag = z.infer<typeof HHSkillTag>;
 
 export const HHCapabilityReport = z.object({
   /** Schema version — for forward compat */
   version: z.string().default("0.1.0"),
-  /** Node name (matches TJConfig.this_node.name) */
+  /** Node name (matches HHConfig.this_node.name) */
   node: z.string(),
   /** ISO datetime when this report was generated */
   reported_at: z.string().datetime().default(() => new Date().toISOString()),
   /** Platform H2 is running on */
   platform: z.enum(["windows", "linux", "macos"]).default("linux"),
   /** GPU status */
-  gpu: TJGPUInfo.default({ available: false }),
+  gpu: HHGPUInfo.default({ available: false }),
   /** Ollama status */
-  ollama: TJOllamaInfo.default({ running: false, models: [] }),
+  ollama: HHOllamaInfo.default({ running: false, models: [] }),
   /**
    * Skill tags this node can handle.
    * Populated automatically based on detected software, or manually set.
    */
-  skills: z.array(TJSkillTag).default([]),
+  skills: z.array(HHSkillTag).default([]),
   /** Free-form additional notes (e.g. "RTX 3070 Ti, 12GB VRAM, fast inference") */
   notes: z.string().optional(),
   /** Whether WOL is available (can be woken remotely) */

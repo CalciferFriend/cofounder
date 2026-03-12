@@ -1,10 +1,10 @@
 # Jerry node — Raspberry Pi 5 / ARM64 image
-# Ollama + Node 22 + Tailscale + OpenClaw + tom-and-jerry
+# Ollama + Node 22 + Tailscale + OpenClaw + his-and-hers
 #
 # Build:
 #   docker buildx build --platform linux/arm64 \
 #     -t calcifer-ai/jerry:arm64 \
-#     -f docker/jerry/Dockerfile.arm64 .
+#     -f docker/h2/Dockerfile.arm64 .
 #
 # Run:
 #   docker run -d \
@@ -55,8 +55,8 @@ RUN mkdir -p /run/sshd && \
     sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config && \
     sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
 
-# ── OpenClaw + tom-and-jerry ──────────────────────────────────────────────────
-RUN npm install -g openclaw tom-and-jerry
+# ── OpenClaw + his-and-hers ──────────────────────────────────────────────────
+RUN npm install -g openclaw his-and-hers
 
 # ── TUN device for Tailscale ──────────────────────────────────────────────────
 RUN mkdir -p /dev/net && \
@@ -95,6 +95,6 @@ ENV JERRY_NAME="jerry-pi" \
 EXPOSE ${GATEWAY_PORT} 11434 22
 
 # Persistent data — mount these as volumes for model + config persistence
-VOLUME ["/root/.ollama", "/root/.openclaw", "/root/.tom-and-jerry"]
+VOLUME ["/root/.ollama", "/root/.openclaw", "/root/.his-and-hers"]
 
 ENTRYPOINT ["/entrypoint.sh"]

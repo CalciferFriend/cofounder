@@ -22,7 +22,7 @@ import { publish } from "./commands/publish.ts";
 import { discover } from "./commands/discover.ts";
 import { logs } from "./commands/logs.ts";
 import { configShow, configGet, configSet, configPath } from "./commands/config.ts";
-import { tjTest } from "./commands/test.ts";
+import { hhTest } from "./commands/test.ts";
 import { upgrade } from "./commands/upgrade.ts";
 import { loadConfig } from "./config/store.ts";
 
@@ -276,7 +276,7 @@ program
   .description("End-to-end connectivity test: Tailscale → Gateway → round-trip")
   .option("--peer <name>", "Target peer name")
   .option("--json", "Output as JSON")
-  .action((opts: { peer?: string; json?: boolean }) => tjTest(opts));
+  .action((opts: { peer?: string; json?: boolean }) => hhTest(opts));
 
 program
   .command("upgrade")
@@ -288,7 +288,7 @@ program
 program
   .command("discover")
   .description("Browse the community node registry — nodes published with hh publish")
-  .option("--role <role>", "Filter by role: h1 | jerry")
+  .option("--role <role>", "Filter by role: h1 | h2")
   .option("--gpu <backend>", "Filter by GPU backend: cuda | rocm | metal")
   .option("--skill <skill>", "Filter by skill tag, e.g. image-gen | transcription")
   .option("--provider <kind>", "Filter by provider: anthropic | openai | ollama | lmstudio")

@@ -10,13 +10,13 @@ export const HHPair = z.object({
   trusted: z.boolean().default(false),
   last_handshake: z.string().datetime().optional(),
   last_heartbeat: z.string().datetime().optional(),
-  tom: z.object({
+  h1: z.object({
     name: z.string(),
     emoji: z.string().optional(),
     tailscale_hostname: z.string(),
     tailscale_ip: z.string(),
   }),
-  jerry: z.object({
+  h2: z.object({
     name: z.string(),
     emoji: z.string().optional(),
     tailscale_hostname: z.string(),

@@ -64,7 +64,7 @@ Used by Docker and CI:
 
 | Variable | Description |
 |----------|-------------|
-| `TJ_ROLE` | `tom` or `jerry` |
+| `HH_ROLE` | `h1` or `h2` |
 | `HH_NAME` | Node display name |
 | `TJ_EMOJI` | Node emoji |
 | `TJ_PROVIDER` | `anthropic`, `openai`, `ollama`, `lmstudio`, `custom` |
@@ -92,7 +92,7 @@ Used by Docker and CI:
 ```json
 {
   "version": "0.1.0",
-  "role": "tom",
+  "role": "h1",
   "node": {
     "name": "Calcifer",
     "emoji": "🔥",
@@ -108,7 +108,7 @@ Used by Docker and CI:
   "cost_routing": {
     "lightweight_model": "claude-haiku-3-5",
     "standard_model": "claude-sonnet-4-5",
-    "heavy_route": "jerry"
+    "heavy_route": "h2"
   },
   "peer_nodes": ["h2-home", "h2-pi"]
 }

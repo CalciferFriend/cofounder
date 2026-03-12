@@ -181,7 +181,7 @@ export async function stepStartup(ctx: Partial<WizardContext>): Promise<Partial<
       // Write shell script + crontab on Linux/macOS H2
       await sshExec(
         sshConfig,
-        `cat > ~/start-gateway.sh << 'TJEOF'\n${STARTUP_SH}\nTJEOF\nchmod +x ~/start-gateway.sh`,
+        `cat > ~/start-gateway.sh << 'HHEOF'\n${STARTUP_SH}\nHHEOF\nchmod +x ~/start-gateway.sh`,
         15_000,
       );
       await sshExec(

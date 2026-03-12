@@ -16,7 +16,7 @@
 import { exec as execCb } from "node:child_process";
 import { promisify } from "node:util";
 import { platform } from "node:os";
-import type { HHCapabilityReport, TJGPUInfo, TJOllamaInfo, TJSkillTag } from "./registry.schema.ts";
+import type { HHCapabilityReport, HHGPUInfo, HHOllamaInfo, HHSkillTag } from "./registry.schema.ts";
 
 const exec = promisify(execCb);
 
@@ -36,7 +36,7 @@ function detectPlatform(): HHCapabilityReport["platform"] {
 
 // ─── Ollama ──────────────────────────────────────────────────────────────────
 
-async function probeOllama(baseUrl = "http://localhost:11434"): Promise<TJOllamaInfo> {
+async function probeOllama(baseUrl = "http://localhost:11434"): Promise<HHOllamaInfo> {
   try {
     const res = await fetch(`${baseUrl}/api/tags`, { signal: AbortSignal.timeout(3000) });
     if (!res.ok) return { running: false, base_url: baseUrl, models: [] };
@@ -50,7 +50,7 @@ async function probeOllama(baseUrl = "http://localhost:11434"): Promise<TJOllama
 
 // ─── GPU ─────────────────────────────────────────────────────────────────────
 
-async function probeNvidiaGPU(): Promise<TJGPUInfo | null> {
+async function probeNvidiaGPU(): Promise<HHGPUInfo | null> {
   try {
     const out = await run(
       "nvidia-smi --query-gpu=name,memory.total --format=csv,noheader,nounits",
@@ -70,7 +70,7 @@ async function probeNvidiaGPU(): Promise<TJGPUInfo | null> {
   }
 }
 
-async function probeRocmGPU(): Promise<TJGPUInfo | null> {
+async function probeRocmGPU(): Promise<HHGPUInfo | null> {
   try {
     const out = await run("rocm-smi --showproductname --csv", 4000);
     if (!out.includes("GPU")) return null;
@@ -82,7 +82,7 @@ async function probeRocmGPU(): Promise<TJGPUInfo | null> {
   }
 }
 
-async function probeAppleGPU(): Promise<TJGPUInfo | null> {
+async function probeAppleGPU(): Promise<HHGPUInfo | null> {
   if (platform() !== "darwin") return null;
   try {
     const out = await run(
@@ -104,7 +104,7 @@ async function probeAppleGPU(): Promise<TJGPUInfo | null> {
   }
 }
 
-async function probeGPU(): Promise<TJGPUInfo> {
+async function probeGPU(): Promise<HHGPUInfo> {
   const nvidia = await probeNvidiaGPU();
   if (nvidia) return nvidia;
 
@@ -120,10 +120,10 @@ async function probeGPU(): Promise<TJGPUInfo> {
 // ─── Skills inference ────────────────────────────────────────────────────────
 
 async function inferSkills(
-  ollama: TJOllamaInfo,
-  gpu: TJGPUInfo,
-): Promise<TJSkillTag[]> {
-  const skills = new Set<TJSkillTag>();
+  ollama: HHOllamaInfo,
+  gpu: HHGPUInfo,
+): Promise<HHSkillTag[]> {
+  const skills = new Set<HHSkillTag>();
 
   if (ollama.running) {
     skills.add("ollama");
@@ -202,7 +202,7 @@ async function probeLatentCodecs(): Promise<string[]> {
  *
  * H1 uses this to know if he can do lossless KV-cache handoff instead of text.
  */
-function inferKVCompatibleModels(ollama: TJOllamaInfo): string[] {
+function inferKVCompatibleModels(ollama: HHOllamaInfo): string[] {
   if (!ollama.running || ollama.models.length === 0) return [];
   // Normalize: strip ":tag" suffix to get base model ID
   return ollama.models.map((m) => m.split(":")[0]).filter(Boolean);
@@ -232,7 +232,7 @@ export async function scanCapabilities(opts: ScanOptions): Promise<HHCapabilityR
   ]);
 
   const [skills, latent_codecs] = await Promise.all([
-    inferSkills(ollama, gpu).catch(() => [] as TJSkillTag[]),
+    inferSkills(ollama, gpu).catch(() => [] as HHSkillTag[]),
     probeLatentCodecs().catch(() => [] as string[]),
   ]);
 

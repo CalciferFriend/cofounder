@@ -16,7 +16,7 @@ and its gateway is healthy.
 ```typescript
 interface HHHeartbeat {
   from: string;              // Sender node name
-  role: "h1" | "jerry";    // Role of the sender
+  role: "h1" | "h2";    // Role of the sender
   tailscale_ip: string;     // Current Tailscale IP (useful if it changed)
   gateway_port: number;     // Gateway port this node is listening on
   gateway_healthy: boolean; // Whether the local gateway passed its own /health check
@@ -32,7 +32,7 @@ interface HHHeartbeat {
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `from` | `string` | ✓ | Node name matching `hh.json` |
-| `role` | `"tom" \| "jerry"` | ✓ | Role of the sender |
+| `role` | `"h1" | "h2"`\|`"h1" | "h2"` | ✓ | Role of the sender |
 | `tailscale_ip` | `string` | ✓ | Current Tailscale IPv4 address |
 | `gateway_port` | `number` | ✓ | Port H1 should use to reach this node's gateway |
 | `gateway_healthy` | `boolean` | ✓ | Result of the node's own `/health` check |
@@ -46,7 +46,7 @@ interface HHHeartbeat {
 ```json
 {
   "from": "GLaDOS",
-  "role": "jerry",
+  "role": "h2",
   "tailscale_ip": "100.a.b.c",
   "gateway_port": 3737,
   "gateway_healthy": true,
@@ -69,7 +69,7 @@ Heartbeats are carried as the `payload` of a `HHMessage` with `type: "heartbeat"
   "to": "Calcifer",
   "turn": 0,
   "type": "heartbeat",
-  "payload": "{\"from\":\"GLaDOS\",\"role\":\"jerry\",\"tailscale_ip\":\"100.a.b.c\",\"gateway_port\":3737,\"gateway_healthy\":true,\"uptime_seconds\":7200,\"timestamp\":\"2026-03-12T10:05:00.000Z\"}",
+  "payload": "{\"from\":\"GLaDOS\",\"role\":\"h2\",\"tailscale_ip\":\"100.a.b.c\",\"gateway_port\":3737,\"gateway_healthy\":true,\"uptime_seconds\":7200,\"timestamp\":\"2026-03-12T10:05:00.000Z\"}",
   "context_summary": null,
   "budget_remaining": null,
   "done": true,

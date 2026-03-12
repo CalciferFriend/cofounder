@@ -90,7 +90,7 @@ hh capabilities show
 
 Expected output:
 ```
-🖥  GLaDOS (jerry) — Windows
+🖥  GLaDOS (h2) — Windows
 GPU:    NVIDIA RTX 3070 Ti · 8 GB VRAM · CUDA
 Ollama: running · 3 models
 Skills: ollama, gpu-inference

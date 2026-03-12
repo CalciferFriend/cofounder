@@ -18,7 +18,7 @@
  *
  *   H2                                      H1
  *   ─────                                      ───
- *   ws://tom-tailscale-ip:18789 ─ Tailscale ─► socat (tailscale IF:18789)
+ *   ws://h1-tailscale-ip:18789 ─ Tailscale ─► socat (tailscale IF:18789)
  *                                                   │ forwards
  *                                              127.0.0.1:18789 (gateway)
  *
