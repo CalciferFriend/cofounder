@@ -81,7 +81,14 @@ export const ProtocolConfig = z.object({
 export const TJConfig = z.object({
   version: z.string().default("0.1.0"),
   this_node: NodeConfig,
+  /** Primary peer node (backwards-compatible single-peer config) */
   peer_node: PeerNodeConfig,
+  /**
+   * Additional peer nodes for multi-Jerry setups.
+   * Combine with peer_node to form the full peer roster.
+   * Use `tj send --peer <name>` to target a specific peer.
+   */
+  peer_nodes: z.array(PeerNodeConfig).optional(),
   pair: PairState.optional(),
   protocol: ProtocolConfig.optional(),
   /** Gateway port for this node (convenience shorthand) */

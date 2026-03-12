@@ -79,6 +79,18 @@ export {
 } from "./providers/pricing.ts";
 export type { TokenPrice } from "./providers/pricing.ts";
 
+// Handoff context (multi-turn summaries)
+export {
+  appendContextEntry,
+  loadContextEntries,
+  buildContextSummary,
+  clearContextEntries,
+  contextEntryCount,
+  summarizeTask,
+  shouldCondenseWithLLM,
+} from "./context/index.ts";
+export type { ContextEntry, SummarizeInput } from "./context/index.ts";
+
 // Capability registry
 export {
   TJCapabilityReport,

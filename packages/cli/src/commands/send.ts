@@ -30,6 +30,8 @@ import { sendMagicPacket, wakeAndWait } from "@tom-and-jerry/core";
 import { suggestRouting } from "@tom-and-jerry/core";
 import { createTaskMessage } from "@tom-and-jerry/core";
 import { createTaskState, pollTaskCompletion } from "../state/tasks.ts";
+import { buildContextSummary } from "@tom-and-jerry/core";
+import { getPeer, selectBestPeer, formatPeerList } from "../peers/select.ts";
 
 const WAKE_TIMEOUT_ATTEMPTS = 45; // 45 × 2s = 90s max
 const WAKE_POLL_MS = 2000;
@@ -38,6 +40,10 @@ export interface SendOptions {
   wait?: boolean;
   waitTimeoutSeconds?: string;
   noState?: boolean;
+  /** Target a specific peer by name (for multi-Jerry setups) */
+  peer?: string;
+  /** Auto-select best peer based on task + capabilities (ignores --peer) */
+  auto?: boolean;
 }
 
 export async function send(task: string, opts: SendOptions = {}) {
@@ -48,7 +54,25 @@ export async function send(task: string, opts: SendOptions = {}) {
     return;
   }
 
-  const peer = config.peer_node;
+  // Resolve target peer: --auto selects by capability, --peer selects by name,
+  // otherwise falls back to primary peer_node.
+  let peer;
+  try {
+    if (opts.auto) {
+      peer = await selectBestPeer(config, task);
+      p.log.info(pc.dim(`Auto-selected peer: ${peer.emoji ?? ""} ${peer.name}`));
+    } else {
+      peer = getPeer(config, opts.peer);
+    }
+  } catch (err) {
+    p.log.error(String(err));
+    if ((config.peer_nodes ?? []).length > 0) {
+      p.log.info(`Available peers:\n${formatPeerList(config)}`);
+    }
+    p.outro("Send failed.");
+    return;
+  }
+
   p.intro(`${pc.bold("Sending task")} → ${peer.emoji ?? ""} ${peer.name}`);
   p.log.info(`Task: ${pc.italic(task)}`);
 
@@ -120,11 +144,15 @@ export async function send(task: string, opts: SendOptions = {}) {
   }
   gwS.stop(pc.green("✓ Gateway ready"));
 
-  // Step 3: build TJTaskMessage
+  // Step 3: build TJTaskMessage (attach context summary for multi-turn continuity)
+  const contextSummary = await buildContextSummary(peer.name, 3).catch(() => null);
+  if (contextSummary) {
+    p.log.info(pc.dim(`Context: ${contextSummary.split("\n")[0]}`));
+  }
   const msg = createTaskMessage(config.this_node.name, peer.name, {
     objective: task,
     constraints: [],
-  });
+  }, { context_summary: contextSummary });
 
   // Step 4: write pending task state (unless --no-state)
   if (!opts.noState) {

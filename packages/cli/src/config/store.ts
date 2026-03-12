@@ -75,5 +75,9 @@ function stripRuntimeSecrets(config: TJConfig): TJConfig {
       ...config.peer_node,
       gateway_token: undefined,
     },
+    peer_nodes: config.peer_nodes?.map((p) => ({
+      ...p,
+      gateway_token: undefined,
+    })),
   };
 }

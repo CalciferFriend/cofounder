@@ -17,6 +17,7 @@ import {
   capabilitiesRoute,
 } from "./commands/capabilities.ts";
 import { budget } from "./commands/budget.ts";
+import { peers } from "./commands/peers.ts";
 import { loadConfig } from "./config/store.ts";
 
 const program = new Command()
@@ -61,11 +62,15 @@ program
   .option("--wait", "Wait for the result before exiting")
   .option("--wait-timeout <seconds>", "Max seconds to wait for result (default: 300)", "300")
   .option("--no-state", "Skip writing task state to disk (fire-and-forget)")
-  .action((task: string, opts: { wait?: boolean; waitTimeout?: string; state?: boolean }) => {
+  .option("--peer <name>", "Target a specific peer by name (multi-Jerry setups)")
+  .option("--auto", "Auto-select the best peer based on task + cached capabilities")
+  .action((task: string, opts: { wait?: boolean; waitTimeout?: string; state?: boolean; peer?: string; auto?: boolean }) => {
     return send(task, {
       wait: opts.wait,
       waitTimeoutSeconds: opts.waitTimeout,
       noState: opts.state === false,
+      peer: opts.peer,
+      auto: opts.auto,
     });
   });
 
@@ -168,5 +173,12 @@ caps
   .description("Show routing decision for a task, using peer capabilities")
   .argument("<task>", "Task description to evaluate")
   .action((task: string) => capabilitiesRoute(task));
+
+program
+  .command("peers")
+  .description("List all configured peer nodes with reachability and capability info")
+  .option("--ping", "Live reachability check for each peer via Tailscale ping")
+  .option("--json", "Output as JSON")
+  .action((opts: { ping?: boolean; json?: boolean }) => peers(opts));
 
 program.parseAsync();

@@ -25,7 +25,7 @@ import pc from "picocolors";
 import { readFile } from "node:fs/promises";
 import { loadTaskState, updateTaskState, type TaskResult } from "../state/tasks.ts";
 import { loadConfig } from "../config/store.ts";
-import { estimateCost } from "@tom-and-jerry/core";
+import { estimateCost, summarizeTask, appendContextEntry } from "@tom-and-jerry/core";
 
 export interface ResultOptions {
   fail?: boolean;
@@ -123,6 +123,30 @@ export async function result(taskId: string, output: string | undefined, opts: R
     }
     if (resultPayload.duration_ms) {
       p.log.info(`  Duration: ${(resultPayload.duration_ms / 1000).toFixed(1)}s`);
+    }
+
+    // Generate and store a context summary for multi-turn handoff continuity.
+    // This summary will be forwarded as context_summary on the next outbound task.
+    try {
+      const config = await loadConfig();
+      const peerName = config?.peer_node?.name ?? updated.to;
+      const summary = summarizeTask({
+        task_id: taskId,
+        objective: updated.objective,
+        output: resultPayload.output,
+        success: resultPayload.success,
+        error: resultPayload.error,
+        artifacts: resultPayload.artifacts,
+        tokens_used: resultPayload.tokens_used,
+        duration_ms: resultPayload.duration_ms,
+      });
+      await appendContextEntry(peerName, {
+        task_id: taskId,
+        summary,
+        created_at: new Date().toISOString(),
+      });
+    } catch {
+      // Context summary is best-effort; don't fail the result command if it errors
     }
   } catch (err) {
     p.log.error(`Failed to update task state: ${err}`);
