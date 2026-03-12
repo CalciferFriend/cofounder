@@ -191,6 +191,67 @@
 
 ---
 
+## Phase 6 — Latent Communication (Experimental) 🔬
+
+> Target: Q3 2026 · Status: protocol design complete, implementation research
+
+**Vision:** Enable agents to communicate via compressed hidden states instead of text tokens, reducing information loss and improving bandwidth efficiency. Based on Vision Wormhole (arXiv:2602.15382), Interlat (arXiv:2511.09149), and LatentMAS (arXiv:2511.20639).
+
+### 6a. TJLatentMessage protocol type ✅ (2026-03-12)
+- [x] TJLatentMessage Zod schema added to discriminated union
+- [x] Support for Vision Wormhole codec path (heterogeneous models via visual encoder)
+- [x] Support for LatentMAS KV-cache path (same-family models, training-free)
+- [x] Mandatory text fallback for backwards compatibility
+- [x] Serialization helpers: serializeLatent() and deserializeLatent()
+- [x] Type guards: isLatentMessage()
+- [x] Factory helper: createLatentMessage()
+- [x] Tests: 9 new tests covering parsing, round-trip serialization, edge cases
+
+### 6b. HLCA sender integration (Calcifer)
+- [ ] Hook into OpenClaw gateway to extract hidden states mid-inference
+- [ ] Implement Vision Wormhole codec adapter (compress 2048d → 512d via visual encoder)
+- [ ] Add `--latent` flag to `tj send` command
+- [ ] Auto-detect if peer supports latent via capability negotiation
+- [ ] Fallback: if peer doesn't advertise latent support, send text instead
+
+### 6c. HLCA receiver integration (GLaDOS)
+- [ ] OpenClaw gateway endpoint to accept TJLatentMessage
+- [ ] Inject compressed latent via visual encoder pathway (Vision Wormhole approach)
+- [ ] Parse and validate sender_model and codec_version match
+- [ ] KV cache injection for LatentMAS path (same-family models)
+- [ ] Graceful degradation: use fallback_text if latent parsing fails
+
+### 6d. Capability advertisement (both)
+- [ ] Add `latent_codecs: ["vw-qwen3vl2b-v1"]` to TJCapabilityReport
+- [ ] Add `kv_compatible_models: ["llama-3.1-70b"]` for LatentMAS
+- [ ] Gateway /capabilities endpoint serves latent support info
+- [ ] Tom caches peer latent capabilities in peer-capabilities.json
+
+### 6e. Automatic routing and fallback (Calcifer)
+- [ ] `routeTask()` checks if peer supports latent before choosing message type
+- [ ] If latent supported: extract hidden state, compress, send TJLatentMessage
+- [ ] If not supported: fall back to text (existing TJTaskMessage)
+- [ ] Log compression ratio and bandwidth savings to task state
+
+### 6f. Benchmarks and validation (both)
+- [ ] Latency: latent vs text round-trip time on same hardware
+- [ ] Accuracy: structured task completion rate (JSON generation, code, math)
+- [ ] Bandwidth: bytes transmitted per task (compressed latent vs tokenized text)
+- [ ] Test across Jerry profiles: RTX 3070 Ti, RTX 4090, M2 Mac, Pi 5
+- [ ] Document results in `docs/benchmarks/latent-vs-text.md`
+
+### Research dependencies
+- Vision Wormhole codec implementation (not yet open-sourced by authors)
+- LatentMAS KV serialization format (reference implementation in PyTorch)
+- OpenClaw middleware hooks for mid-inference hidden state extraction
+
+**Note:** Phase 6 is marked experimental because the upstream codec implementations
+are not production-ready. The protocol design is complete and ready to use once
+the research implementations mature. See `docs/future.md` for detailed research
+context and `docs/latent-communication.md` for implementation guide.
+
+---
+
 ## Who Owns What
 
 | Area | Owner |

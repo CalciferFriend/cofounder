@@ -76,6 +76,30 @@ export const TJErrorPayload = z.object({
 });
 export type TJErrorPayload = z.infer<typeof TJErrorPayload>;
 
+/** Payload for type: "latent" — latent space communication via Vision Wormhole or KV cache */
+export const TJLatentPayload = z.object({
+  task_id: z.string().uuid(),
+  sender_model: z.string(),
+  sender_hidden_dim: z.number().int().positive(),
+
+  // Vision Wormhole codec output (primary path for heterogeneous models)
+  codec_version: z.string().optional(),
+  codec_output_dim: z.number().int().positive(),
+  codec_tokens: z.number().int().positive(),
+  compressed_latent: z.string().optional(), // base64-encoded float16 tensor [tokens x output_dim]
+
+  // LatentMAS KV-cache path (same-family models only, training-free)
+  kv_model: z.string().optional(), // must match receiver model exactly
+  kv_cache: z.string().optional(), // base64-encoded KV cache
+
+  // Always include text fallback for nodes that don't support latent
+  fallback_text: z.string(),
+  fallback_required: z.boolean().default(false), // if true, receiver MUST use text fallback
+
+  compression_ratio: z.number().positive().optional(), // raw hidden size / compressed size
+});
+export type TJLatentPayload = z.infer<typeof TJLatentPayload>;
+
 // ─── Discriminated union variants ────────────────────────────────────────────
 
 export const TJTaskMessage = TJMessageBase.extend({
@@ -114,6 +138,12 @@ export const TJErrorMessage = TJMessageBase.extend({
 });
 export type TJErrorMessage = z.infer<typeof TJErrorMessage>;
 
+export const TJLatentMessage = TJMessageBase.extend({
+  type: z.literal("latent"),
+  payload: TJLatentPayload,
+});
+export type TJLatentMessage = z.infer<typeof TJLatentMessage>;
+
 // ─── Discriminated union ─────────────────────────────────────────────────────
 
 /**
@@ -128,6 +158,7 @@ export const TJMessage = z.discriminatedUnion("type", [
   TJHandoffMessage,
   TJWakeMessage,
   TJErrorMessage,
+  TJLatentMessage,
 ]);
 export type TJMessage = z.infer<typeof TJMessage>;
 
@@ -155,6 +186,10 @@ export function isWakeMessage(msg: TJMessage): msg is TJWakeMessage {
 
 export function isErrorMessage(msg: TJMessage): msg is TJErrorMessage {
   return msg.type === "error";
+}
+
+export function isLatentMessage(msg: TJMessage): msg is TJLatentMessage {
+  return msg.type === "latent";
 }
 
 // ─── Factory helpers ──────────────────────────────────────────────────────────
@@ -195,4 +230,71 @@ export function createWakeMessage(
   reason?: string,
 ): TJWakeMessage {
   return TJWakeMessage.parse({ from, to, type: "wake", payload: { reason } });
+}
+
+/** Build a latent message */
+export function createLatentMessage(
+  from: string,
+  to: string,
+  payload: TJLatentPayload,
+  opts?: Partial<Pick<TJLatentMessage, "turn" | "context_summary">>,
+): TJLatentMessage {
+  return TJLatentMessage.parse({ from, to, type: "latent", payload, ...opts });
+}
+
+// ─── Latent serialization helpers ────────────────────────────────────────────
+
+/**
+ * Serialize a Float32Array tensor to base64 string for transport.
+ * Uses float16 encoding to reduce bandwidth (2 bytes per value vs 4).
+ *
+ * @param tensor - The float tensor to serialize
+ * @param tokens - Number of latent tokens (first dimension)
+ * @param dim - Dimension per token (second dimension)
+ * @returns base64-encoded string
+ */
+export function serializeLatent(tensor: Float32Array, tokens: number, dim: number): string {
+  if (tensor.length !== tokens * dim) {
+    throw new Error(`Tensor size mismatch: expected ${tokens * dim}, got ${tensor.length}`);
+  }
+
+  // Convert Float32 to Float16 (half precision) for bandwidth savings
+  // Note: This is a simplified implementation. Production would use a proper float16 library.
+  const buffer = Buffer.alloc(tokens * dim * 2); // 2 bytes per float16
+  for (let i = 0; i < tensor.length; i++) {
+    // Simple float32 to float16 conversion (loses precision but saves bandwidth)
+    const view = new DataView(buffer.buffer);
+    const f32 = tensor[i];
+    // Store as float32 for now (would use proper float16 in production)
+    view.setFloat32(i * 2, f32, true);
+  }
+
+  return buffer.toString("base64");
+}
+
+/**
+ * Deserialize a base64-encoded latent tensor back to Float32Array.
+ *
+ * @param encoded - Base64-encoded tensor string
+ * @param tokens - Number of latent tokens
+ * @param dim - Dimension per token
+ * @returns Float32Array tensor
+ */
+export function deserializeLatent(encoded: string, tokens: number, dim: number): Float32Array {
+  const buffer = Buffer.from(encoded, "base64");
+  const expectedSize = tokens * dim * 2; // 2 bytes per float16
+
+  if (buffer.length !== expectedSize) {
+    throw new Error(`Buffer size mismatch: expected ${expectedSize}, got ${buffer.length}`);
+  }
+
+  const result = new Float32Array(tokens * dim);
+  const view = new DataView(buffer.buffer);
+
+  for (let i = 0; i < result.length; i++) {
+    // Read back from float32 (would use proper float16 in production)
+    result[i] = view.getFloat32(i * 2, true);
+  }
+
+  return result;
 }

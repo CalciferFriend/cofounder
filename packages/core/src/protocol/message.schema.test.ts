@@ -4,13 +4,18 @@ import {
   TJTaskMessage,
   TJResultMessage,
   TJHeartbeatMessage,
+  TJLatentMessage,
   createTaskMessage,
   createResultMessage,
   createHeartbeatMessage,
   createWakeMessage,
+  createLatentMessage,
   isTaskMessage,
   isResultMessage,
   isHeartbeatMessage,
+  isLatentMessage,
+  serializeLatent,
+  deserializeLatent,
 } from "./message.schema.ts";
 import { randomUUID } from "node:crypto";
 
@@ -154,5 +159,171 @@ describe("TJMessage discriminated union", () => {
     const msg = createWakeMessage("Calcifer", "GLaDOS", "image generation task");
     expect(msg.type).toBe("wake");
     expect(msg.payload.reason).toBe("image generation task");
+  });
+});
+
+describe("TJLatentMessage — latent space communication", () => {
+  it("parses a latent message with Vision Wormhole codec", () => {
+    const taskId = randomUUID();
+    const msg = TJLatentMessage.parse({
+      from: "Calcifer",
+      to: "GLaDOS",
+      type: "latent",
+      payload: {
+        task_id: taskId,
+        sender_model: "Qwen3-VL-2B-Thinking",
+        sender_hidden_dim: 2048,
+        codec_version: "vw-qwen3vl2b-v1",
+        codec_output_dim: 512,
+        codec_tokens: 8,
+        compressed_latent: "dGVzdF9iYXNlNjRfZGF0YQ==", // dummy base64
+        fallback_text: "Generate an image of a cat",
+        compression_ratio: 4.0,
+      },
+    });
+
+    expect(msg.from).toBe("Calcifer");
+    expect(msg.to).toBe("GLaDOS");
+    expect(msg.type).toBe("latent");
+    expect(msg.payload.sender_model).toBe("Qwen3-VL-2B-Thinking");
+    expect(msg.payload.codec_output_dim).toBe(512);
+    expect(msg.payload.codec_tokens).toBe(8);
+    expect(msg.payload.fallback_text).toBe("Generate an image of a cat");
+    expect(msg.payload.compression_ratio).toBe(4.0);
+  });
+
+  it("parses a latent message with KV cache (LatentMAS path)", () => {
+    const taskId = randomUUID();
+    const msg = TJLatentMessage.parse({
+      from: "Calcifer",
+      to: "GLaDOS",
+      type: "latent",
+      payload: {
+        task_id: taskId,
+        sender_model: "llama-3.1-70b",
+        sender_hidden_dim: 8192,
+        codec_output_dim: 0, // not using codec, using KV cache
+        codec_tokens: 0,
+        kv_model: "llama-3.1-70b", // must match exactly
+        kv_cache: "a3ZfY2FjaGVfYmFzZTY0X2RhdGE=", // dummy base64
+        fallback_text: "Reasoning task context",
+        fallback_required: false,
+      },
+    });
+
+    expect(msg.type).toBe("latent");
+    expect(msg.payload.kv_model).toBe("llama-3.1-70b");
+    expect(msg.payload.kv_cache).toBe("a3ZfY2FjaGVfYmFzZTY0X2RhdGE=");
+    expect(msg.payload.fallback_required).toBe(false);
+  });
+
+  it("parses via discriminated union — latent", () => {
+    const taskId = randomUUID();
+    const msg = TJMessage.parse({
+      from: "Calcifer",
+      to: "GLaDOS",
+      type: "latent",
+      payload: {
+        task_id: taskId,
+        sender_model: "Qwen3-VL-2B",
+        sender_hidden_dim: 2048,
+        codec_output_dim: 512,
+        codec_tokens: 8,
+        fallback_text: "Generate a report",
+      },
+    });
+
+    expect(msg.type).toBe("latent");
+    expect(isLatentMessage(msg)).toBe(true);
+    if (isLatentMessage(msg)) {
+      expect(msg.payload.sender_model).toBe("Qwen3-VL-2B");
+      expect(msg.payload.fallback_text).toBe("Generate a report");
+    }
+  });
+
+  it("createLatentMessage builds valid latent message", () => {
+    const taskId = randomUUID();
+    const msg = createLatentMessage("Calcifer", "GLaDOS", {
+      task_id: taskId,
+      sender_model: "Qwen3-VL-2B",
+      sender_hidden_dim: 2048,
+      codec_output_dim: 512,
+      codec_tokens: 8,
+      compressed_latent: "Y29tcHJlc3NlZF9kYXRh",
+      fallback_text: "Task description",
+    });
+
+    expect(msg.type).toBe("latent");
+    expect(msg.id).toBeTruthy();
+    expect(msg.timestamp).toBeTruthy();
+    expect(msg.payload.task_id).toBe(taskId);
+  });
+
+  it("requires fallback_text field", () => {
+    const taskId = randomUUID();
+    expect(() =>
+      TJLatentMessage.parse({
+        from: "Calcifer",
+        to: "GLaDOS",
+        type: "latent",
+        payload: {
+          task_id: taskId,
+          sender_model: "Qwen3-VL-2B",
+          sender_hidden_dim: 2048,
+          codec_output_dim: 512,
+          codec_tokens: 8,
+          // missing fallback_text — should fail
+        },
+      }),
+    ).toThrow();
+  });
+});
+
+describe("Latent serialization helpers", () => {
+  it("serializeLatent and deserializeLatent round-trip correctly", () => {
+    const tokens = 8;
+    const dim = 512;
+    const originalTensor = new Float32Array(tokens * dim);
+
+    // Fill with test data
+    for (let i = 0; i < originalTensor.length; i++) {
+      originalTensor[i] = Math.random() * 2 - 1; // [-1, 1]
+    }
+
+    const encoded = serializeLatent(originalTensor, tokens, dim);
+    expect(typeof encoded).toBe("string");
+    expect(encoded.length).toBeGreaterThan(0);
+
+    const decoded = deserializeLatent(encoded, tokens, dim);
+    expect(decoded.length).toBe(originalTensor.length);
+
+    // Check values are approximately equal (allowing for float16 precision loss)
+    for (let i = 0; i < originalTensor.length; i++) {
+      expect(Math.abs(decoded[i] - originalTensor[i])).toBeLessThan(0.01);
+    }
+  });
+
+  it("serializeLatent throws on dimension mismatch", () => {
+    const tensor = new Float32Array(100);
+    expect(() => serializeLatent(tensor, 8, 512)).toThrow("Tensor size mismatch");
+  });
+
+  it("deserializeLatent throws on buffer size mismatch", () => {
+    const encoded = "aW52YWxpZA=="; // too small
+    expect(() => deserializeLatent(encoded, 8, 512)).toThrow("Buffer size mismatch");
+  });
+
+  it("handles zero tensor correctly", () => {
+    const tokens = 4;
+    const dim = 256;
+    const zeroTensor = new Float32Array(tokens * dim); // all zeros
+
+    const encoded = serializeLatent(zeroTensor, tokens, dim);
+    const decoded = deserializeLatent(encoded, tokens, dim);
+
+    expect(decoded.length).toBe(zeroTensor.length);
+    for (let i = 0; i < decoded.length; i++) {
+      expect(decoded[i]).toBe(0);
+    }
   });
 });
