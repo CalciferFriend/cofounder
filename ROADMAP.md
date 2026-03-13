@@ -153,10 +153,18 @@
 - [x] `hh upgrade` — npm registry version check; --check (exit 1 if outdated, CI-friendly); --json; respects NO_UPDATE_NOTIFIER
 - [x] Reference docs added for all five commands; sidebar updated
 
+### 4f. Docs catch-up — result / watch / heartbeat + troubleshooting (Calcifer) ✅ (2026-03-13)
+- [x] `hh result` reference page — flags, executor contract, webhook delivery, exit codes
+- [x] `hh watch` reference page — daemon lifecycle, executor env vars, streaming, Windows startup
+- [x] `hh heartbeat` reference page — subcommands, flow diagram, payload format, auto-scheduling
+- [x] `guide/troubleshooting.md` — 40+ common issues across setup, send, gateway, streaming, capabilities, Windows
+- [x] Sidebar: result/watch/heartbeat wired in; Troubleshooting section added to guide sidebar
+- [x] `reference/cli.md` updated with stubs for result/watch/heartbeat
+
 ### 4d. Discord community + showcase
 - [ ] Discord community for his-and-hers setups
 - [ ] Showcase: what are people building with it?
-- [x] Docs site (VitePress) ✅ (2026-03-12) — 34 pages across guide/reference/protocol/hardware
+- [x] Docs site (VitePress) ✅ (2026-03-12) — 37 pages across guide/reference/protocol/hardware
 
 ---
 

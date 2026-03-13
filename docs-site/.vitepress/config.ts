@@ -71,6 +71,12 @@ export default defineConfig({
             { text: "Multi-H2", link: "/guide/multi-h2" },
           ],
         },
+        {
+          text: "Help",
+          items: [
+            { text: "Troubleshooting", link: "/guide/troubleshooting" },
+          ],
+        },
       ],
 
       "/reference/": [
@@ -91,6 +97,9 @@ export default defineConfig({
             { text: "hh pair", link: "/reference/pair" },
             { text: "hh config", link: "/reference/config" },
             { text: "hh test", link: "/reference/test" },
+            { text: "hh result", link: "/reference/result" },
+            { text: "hh watch", link: "/reference/watch" },
+            { text: "hh heartbeat", link: "/reference/heartbeat" },
             { text: "hh peers", link: "/reference/peers" },
             { text: "hh replay", link: "/reference/replay" },
             { text: "hh cancel", link: "/reference/cancel" },

@@ -189,13 +189,47 @@ Checks: Node version, Tailscale status, SSH access to peers, gateway health, WOL
 
 ---
 
-### `hh heartbeat`
+### `hh result`
 
-Manually send a heartbeat to H1 (typically run automatically by H2's gateway).
+Mark a pending task as completed or failed. Called by H2 after processing a delegated task.
 
 ```bash
-hh heartbeat
-hh heartbeat --peer h1-name
+hh result <id> "output text"
+hh result <id> --fail "error message"
+hh result <id> --output-file /tmp/result.txt
+hh result <id> "done" --webhook-url http://100.x.x.x:38791/result
+```
+
+See [hh result reference](/reference/result) for full docs.
+
+---
+
+### `hh watch`
+
+H2-side task listener daemon. Polls for pending tasks, dispatches them to an executor, and delivers results back to H1.
+
+```bash
+hh watch                                   # poll every 5s, print pending
+hh watch --exec "node run-task.js"         # auto-dispatch to executor
+hh watch --exec "node run-task.js" --serve-capabilities
+hh watch --once                            # single-pass
+hh watch --interval 10                     # custom poll interval
+hh watch --dry-run                         # detect without executing
+hh watch --json                            # machine-readable output
+```
+
+See [hh watch reference](/reference/watch) for full docs.
+
+---
+
+### `hh heartbeat`
+
+Send, show, or record heartbeats between H1 and H2.
+
+```bash
+hh heartbeat           # show last heartbeat from peer
+hh heartbeat send      # deliver a heartbeat to configured peer
+hh heartbeat record --from GLaDOS --at <iso>
 ```
 
 ---
