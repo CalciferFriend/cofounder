@@ -5,7 +5,7 @@ All notable changes to his-and-hers will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.0] - 2026-03-13
 
 ### Added
 
@@ -70,12 +70,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`hh logs` command** — Pretty-printed task history with status badges, relative timestamps, `--status`, `--peer`, `--since`, `--limit`, `--output`, `--json`, `--follow` (live tail)
 - **Docs site** — 34 pages via VitePress across guide/reference/protocol/hardware sections
 
-#### Phase 5: Resilience & Developer Experience (2026-03-12)
+#### Phase 5: Resilience & Developer Experience (2026-03-12–13)
 - **`hh config` command** — `show` (redact secrets), `get <key>` (dot-notation), `set <key> <value>` (auto type coercion), `path`
 - **`hh test` command** — Tailscale reachability + RTT, gateway health, round-trip wake message + RTT, summary table, `--json`, exit code 1 on failure
 - **Webhook result push** — H1 exposes POST /result (token-gated, one-shot), `deliverResultWebhook()` helper, `startResultServer()` auto-binds to Tailscale IP, fallback to polling
 - **Exponential backoff + retry** — `withRetry()` wrapper, `--max-retries` CLI flag, backoff state persistence (`~/.his-and-hers/retry/<id>.json`), `cronRetryDecision()` for cron safety
-- **Tests** — 28 new tests covering retry logic, webhook auth, timeout, one-shot close, URL parsing
+- **`hh schedule` command** — Recurring H2 task delegation via system cron: `add --cron "..." "<task>"`, `list` (with next-run time), `remove <id>`, `enable/disable <id>`, `run <id>`; schedule store at `~/.his-and-hers/schedules.json`; crontab installer/remover for system cron integration
+- **Tests** — 35 new tests covering retry logic, webhook auth, timeout, one-shot close, URL parsing, schedule store CRUD, crontab parser
 
 #### Phase 6: Latent Communication (2026-03-12, Experimental)
 - **`HHLatentMessage` type** — Added to `HHMessage` discriminated union for latent space communication
@@ -103,9 +104,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - systemd path resolution on Linux
 - GitHub Actions branch filters (master + main support)
 
-## [0.1.0] - TBD
+## [Unreleased]
 
-Initial release (pending Phase 2 completion).
+_Nothing yet._
 
 ---
 
