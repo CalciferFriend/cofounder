@@ -128,3 +128,28 @@ export {
   isPeerCapabilityStale,
 } from "./capabilities/index.ts";
 export type { ScanOptions } from "./capabilities/index.ts";
+
+// Schedule
+export { HHSchedule, HHScheduleList } from "./schedule/schema.ts";
+export {
+  loadSchedules,
+  saveSchedules,
+  addSchedule,
+  findSchedule,
+  removeSchedule,
+  enableSchedule,
+  disableSchedule,
+  updateLastRun,
+  updateNextRun,
+} from "./schedule/store.ts";
+export type { AddScheduleInput } from "./schedule/store.ts";
+export {
+  readCrontab,
+  writeCrontab,
+  installCronEntry,
+  removeCronEntry,
+  listHHCronEntries,
+  validateCron,
+  calculateNextRun,
+} from "./schedule/crontab.ts";
+export type { CrontabEntry } from "./schedule/crontab.ts";

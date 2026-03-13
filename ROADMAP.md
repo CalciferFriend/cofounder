@@ -192,6 +192,16 @@
 - [x] `cronRetryDecision()` — send/skip/retry/backoff logic for cron safety
 - [x] Tests: 19 tests covering withRetry, RetryState persistence, cronRetryDecision, nextRetryAt
 
+### 5f. `hh schedule` — recurring task delegation (Calcifer) ✅ (2026-03-13)
+- [x] `hh schedule add --cron "..." "<task>"` — register recurring H2 task + install crontab entry
+- [x] `hh schedule list` — show all schedules with next-run time
+- [x] `hh schedule remove <id>` — unregister + remove crontab entry
+- [x] `hh schedule enable/disable <id>` — toggle without removing
+- [x] `hh schedule run <id>` — manual trigger (updates last_run)
+- [x] Schedule store: ~/.his-and-hers/schedules.json
+- [x] Crontab installer/remover (system cron integration)
+- [x] Tests: store CRUD + crontab parser
+
 ---
 
 ## Phase 6 — Latent Communication (Experimental) 🔬

@@ -25,6 +25,14 @@ import { configShow, configGet, configSet, configPath } from "./commands/config.
 import { hhTest } from "./commands/test.ts";
 import { upgrade } from "./commands/upgrade.ts";
 import { watch } from "./commands/watch.ts";
+import {
+  scheduleAdd,
+  scheduleList,
+  scheduleRemove,
+  scheduleEnable,
+  scheduleDisable,
+  scheduleRun,
+} from "./commands/schedule.ts";
 import { loadConfig } from "./config/store.ts";
 
 const program = new Command()
@@ -315,5 +323,60 @@ program
   .action((opts: { interval?: string; exec?: string; once?: boolean; dryRun?: boolean; json?: boolean }) =>
     watch(opts),
   );
+
+// ─── Schedule ─────────────────────────────────────────────────────────────────
+
+const scheduleCmd = program
+  .command("schedule")
+  .description("Manage recurring task delegation via cron");
+
+scheduleCmd
+  .command("add")
+  .description("Add a new scheduled task")
+  .requiredOption("--cron <expression>", "Cron expression (e.g., '0 2 * * *')")
+  .argument("<task>", "Task description to send")
+  .option("--peer <name>", "Target a specific peer by name")
+  .option("--latent", "Use latent communication mode")
+  .option("--name <label>", "Human-friendly label for this schedule")
+  .action((task: string, opts: { cron: string; peer?: string; latent?: boolean; name?: string }) => {
+    return scheduleAdd({
+      cron: opts.cron,
+      task,
+      peer: opts.peer,
+      latent: opts.latent,
+      name: opts.name,
+    });
+  });
+
+scheduleCmd
+  .command("list")
+  .description("List all scheduled tasks")
+  .option("--json", "Output as JSON")
+  .action((opts: { json?: boolean }) => scheduleList(opts));
+
+scheduleCmd
+  .command("remove")
+  .aliases(["rm"])
+  .description("Remove a scheduled task")
+  .argument("<id>", "Schedule ID or prefix")
+  .action((id: string) => scheduleRemove(id));
+
+scheduleCmd
+  .command("enable")
+  .description("Enable a disabled schedule")
+  .argument("<id>", "Schedule ID or prefix")
+  .action((id: string) => scheduleEnable(id));
+
+scheduleCmd
+  .command("disable")
+  .description("Disable a schedule without removing it")
+  .argument("<id>", "Schedule ID or prefix")
+  .action((id: string) => scheduleDisable(id));
+
+scheduleCmd
+  .command("run")
+  .description("Manually trigger a schedule (run now)")
+  .argument("<id>", "Schedule ID or prefix")
+  .action((id: string) => scheduleRun(id));
 
 program.parseAsync();
