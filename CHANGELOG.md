@@ -5,6 +5,22 @@ All notable changes to his-and-hers will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — v0.2.0
+
+### Added
+
+- **GitHub Pages docs deploy** (`docs.yml` workflow) — VitePress site auto-deploys to
+  `https://calcierfriend.github.io/his-and-hers/` on every push to `main`/`master` that
+  touches `docs-site/`. Set `VITE_DOCS_BASE=/` to use a custom domain instead.
+- **VitePress base path** — configurable via `VITE_DOCS_BASE` env var; defaults to `/`
+  for local dev, set to `/his-and-hers/` in CI for GitHub Pages compatibility.
+
+### Tests
+- **Budget test suite** — 25 new Vitest tests for `buildBudgetSummary()` and
+  `budgetRoutingAdvice()` (no command had been missing coverage). Total: 342 tests.
+
+---
+
 ## [0.1.0] - 2026-03-13
 
 ### Added

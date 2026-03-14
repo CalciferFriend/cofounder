@@ -165,6 +165,7 @@
 - [ ] Discord community for his-and-hers setups
 - [ ] Showcase: what are people building with it?
 - [x] Docs site (VitePress) ✅ (2026-03-12) — 37 pages across guide/reference/protocol/hardware
+- [x] GitHub Pages deploy workflow ✅ (2026-03-14 Calcifer) — `docs.yml` + env-based `VITE_DOCS_BASE`
 
 ---
 

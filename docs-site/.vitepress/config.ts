@@ -4,7 +4,9 @@ export default defineConfig({
   title: "his-and-hers",
   description: "Two agents. Separate machines. One command to wire them.",
   lang: "en-US",
-  base: "/",
+  // In CI (GitHub Pages) VITE_DOCS_BASE is set to /his-and-hers/
+  // For a custom domain deployment, set VITE_DOCS_BASE=/ (or leave unset locally)
+  base: process.env.VITE_DOCS_BASE ?? "/",
 
   head: [
     ["link", { rel: "icon", href: "/favicon.ico" }],
