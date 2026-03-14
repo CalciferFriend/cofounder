@@ -43,7 +43,13 @@ import { chat } from "./commands/chat.ts";
 import { prune } from "./commands/prune.ts";
 import { exportTasks } from "./commands/export.ts";
 import { completion } from "./commands/completion.ts";
-import { createRequire } from "node:module";
+import {
+  templateAdd,
+  templateList,
+  templateShow,
+  templateRun,
+  templateRemove,
+} from "./commands/template.ts";
 
 const _require = createRequire(import.meta.url);
 const { version: _hhVersion } = _require("../package.json") as { version: string };
@@ -534,5 +540,57 @@ program
   .action((shell: string | undefined, opts: { hint?: boolean }) =>
     completion({ shell, noHint: opts.hint === false }),
   );
+
+// ─── hh template ─────────────────────────────────────────────────────────────
+
+const templateCmd = program
+  .command("template")
+  .description("Manage named task templates with {variable} substitution");
+
+templateCmd
+  .command("add <name>")
+  .description('Save a new task template (use {var}, {1}, {*} as placeholders in --task)')
+  .requiredOption("--task <task>", "Task string with optional {variable} placeholders")
+  .option("--peer <name>", "Default peer node to run this template on")
+  .option("--timeout <seconds>", "Default task timeout in seconds", parseInt)
+  .option("--notify <url>", "Default notification webhook URL")
+  .option("--desc <text>", "Optional human-readable description")
+  .action((name: string, opts: { task: string; peer?: string; timeout?: number; notify?: string; desc?: string }) =>
+    templateAdd({ name, ...opts }),
+  );
+
+templateCmd
+  .command("list")
+  .alias("ls")
+  .description("List all saved templates")
+  .option("--json", "Output as JSON")
+  .action((opts: { json?: boolean }) => templateList(opts));
+
+templateCmd
+  .command("show <name>")
+  .description("Show full details of a template")
+  .option("--json", "Output as JSON")
+  .action((name: string, opts: { json?: boolean }) => templateShow(name, opts));
+
+templateCmd
+  .command("run <name> [args...]")
+  .description("Expand a template and send the task to H2")
+  .option("--var <key=value>", "Bind a named template variable (repeatable)", (v: string, acc: string[]) => [...acc, v], [] as string[])
+  .option("--peer <name>", "Override the template default peer")
+  .option("--timeout <seconds>", "Override the template default timeout", parseInt)
+  .option("--notify <url>", "Override the template notification webhook")
+  .option("--wait", "Wait for the result before exiting")
+  .option("--latent", "Force latent message mode (requires peer latent support)")
+  .option("--auto-latent", "Prefer latent mode; fall back to text if peer doesn't support it")
+  .action((name: string, args: string[], opts: { var?: string[]; peer?: string; timeout?: number; notify?: string; wait?: boolean; latent?: boolean; autoLatent?: boolean }) =>
+    templateRun(name, { ...opts, args }),
+  );
+
+templateCmd
+  .command("remove <name>")
+  .alias("rm")
+  .description("Remove a saved template by name or id prefix")
+  .option("--force", "Skip confirmation prompt")
+  .action((name: string, opts: { force?: boolean }) => templateRemove(name, opts));
 
 program.parseAsync();

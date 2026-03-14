@@ -324,6 +324,34 @@ See [hh upgrade reference](/reference/upgrade) for full docs.
 
 ---
 
+### `hh template`
+
+Save named task templates with `{variable}` placeholders and run them on demand.
+
+```bash
+# Save a template
+hh template add summarize --task "Summarise this in {lang}: {*}" --peer GLaDOS
+
+# List templates
+hh template list
+
+# Run a template — named var + positional splat
+hh template run summarize --var lang=English "My long document..."
+
+# Run and wait for result
+hh template run summarize --var lang=French --wait "Mon document..."
+
+# Inspect or remove
+hh template show summarize
+hh template remove summarize
+```
+
+Variables: `{varname}` → `--var name=value` · `{1}`, `{2}` → positional args · `{*}` → all args joined.
+
+See [hh template reference](/reference/template) for full docs.
+
+---
+
 ### `hh prune`
 
 Clean up stale task state files, retry records, and schedule logs from `~/.his-and-hers/`.

@@ -129,6 +129,12 @@ export const COMMANDS: CompletionCommand[] = [
 
   // Data management
   {
+    name: "template",
+    description: "Manage named task templates with {variable} substitution",
+    subcommands: ["add", "list", "show", "run", "remove"],
+    flags: ["--task", "--peer", "--timeout", "--notify", "--desc", "--var", "--wait", "--force", "--json"],
+  },
+  {
     name: "export",
     description: "Export task history to markdown, CSV, or JSON",
     flags: ["--format", "--out", "--since", "--status", "--peer", "--no-output"],

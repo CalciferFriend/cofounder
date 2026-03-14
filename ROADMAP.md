@@ -302,6 +302,19 @@
 - [x] `--no-context`, `--peer`, `--timeout` flags; `--timeout` defaults to 300s
 - [x] `reference/chat.md` docs page + sidebar wired + `reference/cli.md` overview section
 
+### 5n. `hh template` — named task templates (Calcifer) ✅ (2026-03-14)
+- [x] `HHTemplate` Zod schema: id, name, task, peer, timeout, notify_webhook, description, created_at
+- [x] `loadTemplates()` / `saveTemplates()` — `~/.his-and-hers/templates.json`
+- [x] `addTemplate()` — UUID generation, duplicate name guard (case-insensitive), placeholder detection
+- [x] `removeTemplate()` / `findTemplate()` — lookup by exact name, full UUID, or id prefix
+- [x] `extractPlaceholders()` — parses `{varname}`, `{1}` / `{2}` positional, `{*}` splat from task string
+- [x] `substituteVars()` — fills named + positional + splat; throws with hint for missing named vars
+- [x] `hh template add/list/show/run/remove` subcommand CLI with @clack prompts
+- [x] `hh template run` delegates to `hh send` pipeline; supports `--var`, `--peer`, `--wait`, `--notify`, `--timeout`, `--latent`, `--auto-latent`
+- [x] Wired into completion registry (add/list/show/run/remove + flag completions)
+- [x] Tests: 33 tests (store.test.ts) covering all CRUD + substitution + edge cases; bug fix: malformed JSON test mkdir
+- [x] `reference/template.md` docs page + sidebar wired + `reference/cli.md` overview section
+
 ---
 
 ## Phase 6 — Latent Communication (Experimental) 🔬

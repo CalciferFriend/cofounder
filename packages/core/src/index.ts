@@ -170,3 +170,13 @@ export {
   getActiveWebhooks,
 } from "./notify/config.ts";
 export type { HHNotifyWebhook, HHNotifyEvent } from "./notify/config.ts";
+export {
+  loadTemplates,
+  saveTemplates,
+  addTemplate,
+  removeTemplate,
+  findTemplate,
+  extractPlaceholders,
+  substituteVars,
+} from "./template/store.ts";
+export type { HHTemplate, AddTemplateInput, SubstituteOptions } from "./template/store.ts";
