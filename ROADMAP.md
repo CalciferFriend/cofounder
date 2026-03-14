@@ -260,6 +260,17 @@
 - [x] Sidebar updated: "Live streaming & notifications" → "Live streaming" + "Persistent notifications"
 - [x] Total tests: **461** (all passing)
 
+### 5j. `hh prune` — stale state cleanup (Calcifer) ✅ (2026-03-14)
+- [x] `parseDuration()` helper — parse `s/m/h/d/w` duration strings to ms
+- [x] `resolveTargetStatuses()` — map `--status` flag to a Set<TaskStatus>
+- [x] `prune()` — scan `~/.his-and-hers/state/tasks/` for stale terminal-status JSON files
+- [x] Age cutoff via `--older-than` (default `30d`); only targets `completed/failed/timeout/cancelled`
+- [x] Optional companion cleanup: `--include-retry` (retry state files), `--include-logs` (schedule logs)
+- [x] Interactive preview table with clack + confirmation prompt; `--force` / `--dry-run` / `--json` flags
+- [x] Wired into CLI as `hh prune` with full option set
+- [x] Tests: 25 tests covering parseDuration, resolveTargetStatuses, integration scenarios; total: **486** (all passing)
+- [x] `reference/prune.md` docs page + sidebar wired + `reference/cli.md` overview section
+
 ---
 
 ## Phase 6 — Latent Communication (Experimental) 🔬

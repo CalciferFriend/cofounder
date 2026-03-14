@@ -5,10 +5,15 @@ All notable changes to his-and-hers will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.0] — 2026-03-14
+## [0.2.0] — 2026-03-14 (updated)
 
 ### Added
 
+- **`hh prune` command** — clean up stale task state files, retry records, and schedule
+  logs from `~/.his-and-hers/`. Flags: `--older-than <duration>` (default `30d`),
+  `--status` (target specific terminal statuses), `--include-retry`, `--include-logs`,
+  `--dry-run`, `--json`, `--force`. Active tasks (`pending`, `running`) are never touched.
+  Reference page added + `reference/cli.md` overview section wired.
 - **`hh notify` command** — persistent notification webhook manager. Register Discord,
   Slack, or generic HTTPS webhooks once; they fire automatically on every `hh send --wait`
   result without needing `--notify` per invocation. Subcommands: `add`, `list`, `remove`,

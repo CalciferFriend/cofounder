@@ -39,6 +39,7 @@ import {
 import { loadConfig } from "./config/store.ts";
 import { notify } from "./commands/notify.ts";
 import { chat } from "./commands/chat.ts";
+import { prune } from "./commands/prune.ts";
 
 const program = new Command()
   .name("hh")
@@ -466,5 +467,32 @@ program
   .option("--no-context", "Start fresh — don't carry forward prior context")
   .option("--timeout <seconds>", "Max seconds to wait per turn (default: 300)", "300")
   .action((opts: { peer?: string; noContext?: boolean; timeout?: string }) => chat(opts));
+
+// ─── Prune ───────────────────────────────────────────────────────────────────
+
+program
+  .command("prune")
+  .description("Clean up stale task state, retry records, and schedule logs")
+  .option("--older-than <duration>", "Prune files older than this (e.g. 7d, 2w, 24h). Default: 30d")
+  .option(
+    "--status <status>",
+    "Which terminal statuses to target: all | completed | failed | timeout | cancelled (default: completed + failed + timeout + cancelled)",
+  )
+  .option("--include-retry", "Also remove retry state files for pruned tasks")
+  .option("--include-logs", "Also truncate matching schedule log files")
+  .option("--dry-run", "Show what would be removed without deleting anything")
+  .option("--json", "Output machine-readable JSON summary")
+  .option("--force", "Skip confirmation prompt")
+  .action(
+    (opts: {
+      olderThan?: string;
+      status?: string;
+      includeRetry?: boolean;
+      includeLogs?: boolean;
+      dryRun?: boolean;
+      json?: boolean;
+      force?: boolean;
+    }) => prune(opts),
+  );
 
 program.parseAsync();

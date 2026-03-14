@@ -321,3 +321,22 @@ hh upgrade --json
 ```
 
 See [hh upgrade reference](/reference/upgrade) for full docs.
+
+---
+
+### `hh prune`
+
+Clean up stale task state files, retry records, and schedule logs from `~/.his-and-hers/`.
+
+```bash
+hh prune                             # interactive — removes completed/failed tasks >30d old
+hh prune --dry-run                   # preview without deleting
+hh prune --older-than 7d --force     # no prompt, 7-day cutoff
+hh prune --status failed             # only failed tasks
+hh prune --include-retry --include-logs  # also clean retry + log files
+hh prune --json                      # machine-readable JSON summary
+```
+
+Active tasks (`pending`, `running`) are **never** pruned.
+
+See [hh prune reference](/reference/prune) for full docs including JSON schema and scheduled pruning examples.

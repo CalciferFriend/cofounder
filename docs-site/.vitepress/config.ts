@@ -110,6 +110,7 @@ export default defineConfig({
             { text: "hh cancel", link: "/reference/cancel" },
             { text: "hh doctor", link: "/reference/doctor" },
             { text: "hh upgrade", link: "/reference/upgrade" },
+            { text: "hh prune", link: "/reference/prune" },
           ],
         },
       ],
