@@ -5,7 +5,10 @@ All notable changes to his-and-hers will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — 2026-03-14
+## [0.3.0] — 2026-03-14
+
+> **Phase 5 complete.** All resilience and developer-experience features shipped.
+> 572 tests passing. Phase 6 (Latent Communication) is experimental — Q3 2026.
 
 ### Added
 

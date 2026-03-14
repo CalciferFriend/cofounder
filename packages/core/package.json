@@ -1,6 +1,6 @@
 {
   "name": "@his-and-hers/core",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Cross-machine pairing protocol, handoff message schema, trust model, peer discovery, WOL, SSH transport",
   "type": "module",
   "license": "MIT",

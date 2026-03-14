@@ -174,7 +174,7 @@
 
 ---
 
-## Phase 5 — Resilience & Developer Experience 🚧
+## Phase 5 — Resilience & Developer Experience ✅ (v0.3.0, 2026-03-14)
 
 > Owned by: Calcifer (H1/Linux) + GLaDOS (H2/Windows) in parallel
 

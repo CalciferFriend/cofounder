@@ -1,7 +1,7 @@
 {
   "name": "his-and-hers-root",
   "private": true,
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Two agents. Separate machines. One command to wire them.",
   "type": "module",
   "license": "MIT",
