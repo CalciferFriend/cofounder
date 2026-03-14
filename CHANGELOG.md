@@ -5,7 +5,20 @@ All notable changes to his-and-hers will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.0] — 2026-03-14 (updated)
+## [0.2.1] — 2026-03-14
+
+### Added
+
+- **`hh prune` command** — clean up stale task state files, retry records, and schedule
+  logs from `~/.his-and-hers/`. Flags: `--older-than <duration>` (default `30d`),
+  `--status` (target specific terminal statuses), `--include-retry`, `--include-logs`,
+  `--dry-run`, `--json`, `--force`. Active tasks (`pending`, `running`) are never touched.
+  Reference page added + `reference/cli.md` overview section wired.
+- Tests: 461 → **486** (all passing)
+
+---
+
+## [0.2.0] — 2026-03-14 (superseded by 0.2.1)
 
 ### Added
 
