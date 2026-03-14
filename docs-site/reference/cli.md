@@ -340,3 +340,55 @@ hh prune --json                      # machine-readable JSON summary
 Active tasks (`pending`, `running`) are **never** pruned.
 
 See [hh prune reference](/reference/prune) for full docs including JSON schema and scheduled pruning examples.
+
+---
+
+### `hh export`
+
+Export task history to a Markdown, CSV, or JSON report.
+
+```bash
+hh export                          # markdown report to stdout
+hh export --format csv             # CSV table
+hh export --format json            # JSON array with summary stats
+hh export --since 7d               # last 7 days only
+hh export --status completed       # filter by status
+hh export --peer GLaDOS            # filter by peer
+hh export --out report.md          # write to file
+hh export --no-output              # omit result text (shorter report)
+```
+
+See [hh export reference](/reference/export) for full docs.
+
+---
+
+### `hh chat`
+
+Interactive multi-turn REPL with a peer node. Context carries forward between turns.
+
+```bash
+hh chat                            # interactive session with primary peer
+hh chat --peer GLaDOS               # target a specific peer
+hh chat --no-context               # fresh context, no history carry-over
+hh chat --timeout 600              # 10-minute turn timeout
+```
+
+In-session: `.context` shows context summary · `.clear` resets it · `exit` / Ctrl-C to quit.
+
+See [hh chat reference](/reference/chat) for full docs.
+
+---
+
+### `hh completion`
+
+Print a shell completion script to stdout. Source it to get tab completion for all `hh` commands.
+
+```bash
+eval "$(hh completion bash)"       # bash (add to ~/.bashrc for permanent)
+eval "$(hh completion zsh)"        # zsh (add to ~/.zshrc for permanent)
+hh completion fish | source        # fish
+hh completion powershell | Out-String | Invoke-Expression   # PowerShell
+hh completion                      # auto-detect current shell
+```
+
+See [hh completion reference](/reference/completion) for full docs.

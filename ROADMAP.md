@@ -271,6 +271,37 @@
 - [x] Tests: 25 tests covering parseDuration, resolveTargetStatuses, integration scenarios; total: **486** (all passing)
 - [x] `reference/prune.md` docs page + sidebar wired + `reference/cli.md` overview section
 
+### 5k. `hh completion` — shell tab completion (Calcifer) ✅ (2026-03-14)
+- [x] Bash, Zsh, Fish, PowerShell completion scripts generated from embedded command registry
+- [x] Completes all top-level commands, subcommands (capabilities/schedule/notify/peers/config), and per-command flags
+- [x] Auto-detects current shell from `$SHELL` when no arg given; `--no-hint` suppresses install hint
+- [x] `COMMANDS` registry kept in sync with `index.ts`; easy to maintain when new commands land
+- [x] 70 tests covering all four shell outputs, auto-detect, and error path
+- [x] `reference/completion.md` docs page + sidebar wired
+
+### 5l. `hh export` — task history export (Calcifer) ✅ (2026-03-14)
+- [x] Markdown (default), CSV, and JSON output formats
+- [x] `parseDuration()` + `applyFilters()` — `--since`, `--status`, `--peer` filters
+- [x] `buildSummary()` — total tasks, by-status breakdown, total cost/tokens/compute time
+- [x] `renderMarkdown()` — summary table + per-task sections with status icons; output truncated at 500 chars
+- [x] `renderCsv()` — proper CSV escaping, 12 columns including optional `output`
+- [x] `renderJson()` — `{ summary, tasks }` object for machine-readable piping
+- [x] `--out <path>` to write to file; stdout by default; `--no-output` flag to strip result text
+- [x] 48 tests covering all three formats, filtering, summary stats, edge cases
+- [x] `reference/export.md` docs page + sidebar wired + `reference/cli.md` overview section
+
+### 5m. `hh chat` — interactive multi-turn REPL (Calcifer) ✅ (2026-03-14)
+- [x] Persistent readline loop; carries `context_summary` forward across turns
+- [x] Loads last 3 context summaries for the peer at startup (persists to `~/.his-and-hers/context/<peer>.json`)
+- [x] Streams partial output via `startStreamServer` if H2 supports it
+- [x] Webhook result delivery (→ polling fallback) per turn; same pipeline as `hh send --wait`
+- [x] Per-turn task state written to `~/.his-and-hers/state/tasks/` (visible in `hh logs`)
+- [x] In-session commands: `.context`, `.clear`, `exit`/`quit`/`.q`/`:q`, Ctrl-C/Ctrl-D
+- [x] WOL + gateway health check before first message; graceful error per-turn
+- [x] Session summary on exit: turns, tokens, cost, duration
+- [x] `--no-context`, `--peer`, `--timeout` flags; `--timeout` defaults to 300s
+- [x] `reference/chat.md` docs page + sidebar wired + `reference/cli.md` overview section
+
 ---
 
 ## Phase 6 — Latent Communication (Experimental) 🔬

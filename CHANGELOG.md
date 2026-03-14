@@ -5,6 +5,26 @@ All notable changes to his-and-hers will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — 2026-03-14
+
+### Added
+
+- **`hh completion`** — shell tab completion for bash, zsh, fish, and PowerShell. Auto-detects
+  current shell from `$SHELL`. Completes all top-level commands, subcommands, and per-command
+  flags. `--no-hint` suppresses install instructions. Reference page wired into docs sidebar.
+- **`hh export`** — export task history to Markdown, CSV, or JSON reports. Supports `--since`,
+  `--status`, `--peer`, `--out`, `--no-output` filters. Markdown report includes a summary
+  table and per-task entries with status icons; CSV has 12 columns including optional `output`;
+  JSON emits `{ summary, tasks }` for machine-readable piping. Reference page wired into docs.
+- **`hh chat`** — interactive multi-turn REPL with a peer node. Carries `context_summary`
+  forward across turns (loads last 3 summaries at startup; persists after each turn). Streams
+  partial output in real-time. Webhook result delivery with polling fallback. In-session `.context`,
+  `.clear`, `exit`, Ctrl-C. Session summary on exit. Each turn saved to task history.
+  `--no-context`, `--peer`, `--timeout` flags. Reference page wired into docs.
+- Tests: 486 → **572** (all passing)
+
+---
+
 ## [0.2.1] — 2026-03-14
 
 ### Added

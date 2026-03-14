@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { Command } from "commander";
+import { createRequire } from "node:module";
 import { onboard } from "./commands/onboard.ts";
 import { pair } from "./commands/pair.ts";
 import { status } from "./commands/status.ts";
@@ -40,11 +41,17 @@ import { loadConfig } from "./config/store.ts";
 import { notify } from "./commands/notify.ts";
 import { chat } from "./commands/chat.ts";
 import { prune } from "./commands/prune.ts";
+import { exportTasks } from "./commands/export.ts";
+import { completion } from "./commands/completion.ts";
+import { createRequire } from "node:module";
+
+const _require = createRequire(import.meta.url);
+const { version: _hhVersion } = _require("../package.json") as { version: string };
 
 const program = new Command()
   .name("hh")
   .description("H1 & H2 — two agents, separate machines, one command to wire them.")
-  .version("0.1.0")
+  .version(_hhVersion)
   // Default action when no subcommand given: onboard if unconfigured, status if already set up
   .action(async () => {
     const config = await loadConfig();
@@ -493,6 +500,39 @@ program
       json?: boolean;
       force?: boolean;
     }) => prune(opts),
+  );
+
+// ─── Export ──────────────────────────────────────────────────────────────────
+
+program
+  .command("export")
+  .description("Export task history to a markdown, CSV, or JSON report")
+  .option("--format <fmt>", "Output format: markdown | csv | json (default: markdown)")
+  .option("--out <path>", "Write report to a file instead of stdout")
+  .option("--since <duration>", "Include only tasks from the last N time units (e.g. 7d, 24h, 30m)")
+  .option("--status <status>", "Filter by status: pending | running | completed | failed | timeout | cancelled")
+  .option("--peer <name>", "Filter by peer node name (substring match)")
+  .option("--no-output", "Omit result output text (shorter report)")
+  .action(
+    (opts: {
+      format?: string;
+      out?: string;
+      since?: string;
+      status?: string;
+      peer?: string;
+      output?: boolean;
+    }) => exportTasks(opts),
+  );
+
+// ─── Completion ──────────────────────────────────────────────────────────────
+
+program
+  .command("completion")
+  .description("Print shell completion script for bash, zsh, fish, or PowerShell")
+  .argument("[shell]", "Target shell: bash | zsh | fish | powershell (auto-detected if omitted)")
+  .option("--no-hint", "Suppress the install hint written to stderr")
+  .action((shell: string | undefined, opts: { hint?: boolean }) =>
+    completion({ shell, noHint: opts.hint === false }),
   );
 
 program.parseAsync();
