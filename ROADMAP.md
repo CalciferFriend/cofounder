@@ -423,24 +423,41 @@ context and `docs/latent-communication.md` for implementation guide. ✅ (2026-0
 - [x] `reference/broadcast.md` docs page + sidebar wired + `reference/cli.md` overview section
 - [x] Wired into completion registry (`--peers`, `--wait`, `--wait-timeout`, `--strategy`, `--no-check`, `--json`)
 
-### 7b. `hh replay` — re-run completed tasks (Calcifer) 🔲
-- [ ] Load a past task by ID (`hh replay <task_id>`)
-- [ ] Re-dispatch to same or different peer (`--peer <name>`)
-- [ ] Diff mode: compare new output against original (`--diff`)
-- [ ] Useful for regression testing: "did this task break between model versions?"
-- [ ] Wired into `hh logs` as `hh logs --replay <id>`
+### 7b. `hh sync` — push workspace files to H2 (Calcifer) ✅ (2026-03-15)
+- [x] `hh sync <path> [--peer <name>]` — rsync a local path to H2 over Tailscale SSH
+- [x] `--dry-run` flag; `--delete` flag for destructive sync
+- [x] Progress bar via clack spinner
+- [x] `--watch` mode: re-sync on local file change (for live collaboration)
+- [x] Wired into `hh send` as `--sync <path>` to auto-push before task dispatch
+- [x] `buildRsyncArgs` / `parseRsyncStats` utilities exported for testing and SDK use
+- [x] `SyncResult` type: ok, localPath, remotePath, peer, dryRun, filesTransferred, bytesTransferred, durationMs
+- [x] `--dest <path>` for explicit remote destination (default: `~/basename`)
+- [x] `--watch-interval <ms>` debounce control
+- [x] 14 tests covering arg building, stat parsing, watch handle, result shape
+- [x] `docs/reference/sync.md` reference page + SDK usage example
 
-### 7c. `hh sync` — push workspace files to H2 (Calcifer) 🔲
-- [ ] `hh sync <path> [--peer <name>]` — rsync a local path to H2 over Tailscale SSH
-- [ ] `--dry-run` flag; `--delete` flag for destructive sync
-- [ ] Progress bar via clack spinner
-- [ ] Wired into `hh send` as `--sync <path>` to auto-push before task dispatch
+### 7c. `hh cluster` — named peer groups (Calcifer) ✅ (2026-03-15)
+- [x] `clusters` field in `HHConfig` schema — `Record<string, string[]>`, persisted to hh.json
+- [x] `hh clusters` / `hh cluster list` — list all groups with stale-peer annotation
+- [x] `hh cluster add <name> --peers <csv>` — create or overwrite a named group
+- [x] `hh cluster show <name>` — inspect group with IP + stale warnings
+- [x] `hh cluster remove <name>` — delete a group (confirm prompt, `--force` to skip)
+- [x] `hh cluster peers add <cluster> <peer>` — add single peer to existing cluster
+- [x] `hh cluster peers remove <cluster> <peer>` — remove single peer from cluster
+- [x] `--no-validate` flag on add/peers-add for pre-staging before all peers are paired
+- [x] `hh broadcast "task" --cluster <name>` — resolve peers from cluster, mutually exclusive with `--peers`
+- [x] `hh peers --cluster <name>` — filter peer list to named group
+- [x] `resolveClusterPeers()` export for SDK / programmatic use
+- [x] 33 tests covering all operations, JSON shapes, error paths, stale detection
+- [x] `docs/reference/cluster.md` reference page + sidebar wired
 
-### 7d. `hh cluster` — named peer groups (Calcifer) 🔲
-- [ ] Define named groups in config: `clusters: { gpu: ["glados", "piper"], fast: ["forge"] }`
-- [ ] `hh broadcast "task" --cluster gpu` targets the group
-- [ ] `hh clusters` command: list, add, remove groups
-- [ ] `hh peers --cluster <name>` filters peer list to the group
+### 7d. `hh attach` — file/context attachment for tasks (Calcifer) 🔲
+- [ ] `hh send "review this" --attach ./report.pdf` — file attached to task message
+- [ ] Supported: PDF, images (PNG/JPEG/WebP), text, code, markdown, JSON
+- [ ] `AttachmentPayload` in HHTaskMessage (base64 + mime + filename)
+- [ ] H2 side: strip attachment from wake text; inject via multimodal message API
+- [ ] Size limit: 10 MB soft cap with truncation warning
+- [ ] Reference docs + tests
 
 ---
 

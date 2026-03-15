@@ -137,6 +137,12 @@ export interface SendOptions {
    * and any generic HTTP endpoint. Used with --wait or --no-wait (fires async).
    */
   notify?: string;
+  /**
+   * Phase 7b: Path to sync to H2 before dispatching the task.
+   * Equivalent to running `hh sync <path>` immediately before `hh send`.
+   * Sync failure is non-fatal: a warning is shown and send continues.
+   */
+  sync?: string;
 }
 
 export async function send(task: string, opts: SendOptions = {}) {
@@ -164,6 +170,19 @@ export async function send(task: string, opts: SendOptions = {}) {
     }
     p.outro("Send failed.");
     return;
+  }
+
+  // Phase 7b: --sync <path> — push files to H2 before dispatch
+  if (opts.sync) {
+    const { sync: runSync } = await import("./sync.ts");
+    p.log.info(pc.dim(`Syncing ${opts.sync} to ${peer.name} before task dispatch…`));
+    const syncResult = await runSync(opts.sync, { peer: peer.name, quiet: false });
+    if (!syncResult.ok) {
+      p.log.warn(pc.yellow(`⚠ Sync to ${peer.name} failed (non-fatal): ${syncResult.error ?? "unknown error"}`));
+      p.log.warn(pc.dim("Continuing with task dispatch…"));
+    } else {
+      p.log.success(pc.green(`✓ Synced ${syncResult.filesTransferred} file${syncResult.filesTransferred === 1 ? "" : "s"} to ${peer.name}`));
+    }
   }
 
   p.intro(`${pc.bold("Sending task")} → ${peer.emoji ?? ""} ${peer.name}`);

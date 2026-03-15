@@ -9,13 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`hh sync`** — push a local path to H2 over Tailscale SSH using `rsync`.
+  `--dry-run` previews without writing; `--delete` mirrors destructively; `--watch`
+  re-syncs on every local file change (debounced, Ctrl-C to stop); `--dest` sets an
+  explicit remote path; `--peer` targets a specific peer. `hh send --sync <path>`
+  auto-syncs before task dispatch (non-fatal on failure). `SyncResult` type exposes
+  ok/filesTransferred/bytesTransferred/durationMs. 14 tests. Reference page at
+  `docs/reference/sync.md`.
 - **`hh broadcast`** — send the same task to multiple peer nodes concurrently. Supports
   `--strategy all` (wait for every peer) and `--strategy first` (stop on first response).
   `--peers <names>` targets a subset; default targets all configured `peer_nodes[]`.
   Per-peer retry, optional gateway health check (`--no-check`), aggregated summary with
   ok/fail counts + total cost/tokens. `--json` emits structured output. 18 tests.
   Reference page wired into docs sidebar.
-- Tests: 640 → **658** (all passing)
+- Tests: 640 → **672** (all passing)
 
 ---
 

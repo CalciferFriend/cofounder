@@ -52,6 +52,15 @@ import {
 } from "./commands/template.ts";
 import { web } from "./commands/web.ts";
 import { broadcast } from "./commands/broadcast.ts";
+import { sync } from "./commands/sync.ts";
+import {
+  clusterList,
+  clusterAdd,
+  clusterShow,
+  clusterRemove,
+  clusterPeersAdd,
+  clusterPeersRemove,
+} from "./commands/cluster.ts";
 
 const _require = createRequire(import.meta.url);
 const { version: _hhVersion } = _require("../package.json") as { version: string };
@@ -106,6 +115,7 @@ program
   .option("--no-webhook", "Disable result webhook server (polling only, --wait mode)")
   .option("--force", "Skip cron duplicate-send guard")
   .option("--notify <url>", "Webhook URL for task completion notification (Discord/Slack/generic)")
+  .option("--sync <path>", "[Phase 7b] Sync a local path to H2 before dispatching the task")
   .action((task: string, opts: {
     wait?: boolean;
     waitTimeout?: string;
@@ -118,6 +128,7 @@ program
     webhook?: boolean;
     force?: boolean;
     notify?: string;
+    sync?: string;
   }) => {
     return send(task, {
       wait: opts.wait,
@@ -131,6 +142,7 @@ program
       noWebhook: opts.webhook === false,
       force: opts.force,
       notify: opts.notify,
+      sync: opts.sync,
     });
   });
 
@@ -285,8 +297,9 @@ program
   .command("peers")
   .description("List all configured peer nodes with reachability and capability info")
   .option("--ping", "Live reachability check for each peer via Tailscale ping")
+  .option("--cluster <name>", "Filter to peers belonging to a named cluster")
   .option("--json", "Output as JSON")
-  .action((opts: { ping?: boolean; json?: boolean }) => peers(opts));
+  .action((opts: { ping?: boolean; cluster?: string; json?: boolean }) => peers(opts));
 
 // ─── Community registry ───────────────────────────────────────────────────────
 
@@ -609,6 +622,7 @@ program
   .description("Send the same task to multiple peer nodes concurrently")
   .argument("<task>", "Task or question to broadcast")
   .option("--peers <names>", "Comma-separated peer names (default: all configured peers)")
+  .option("--cluster <name>", "Target peers in a named cluster (mutually exclusive with --peers)")
   .option("--wait", "Wait for result(s) before exiting")
   .option("--wait-timeout <seconds>", "Timeout for waiting (default: 120s)")
   .option(
@@ -622,6 +636,7 @@ program
       task: string,
       opts: {
         peers?: string;
+        cluster?: string;
         wait?: boolean;
         waitTimeout?: string;
         strategy?: string;
@@ -631,12 +646,118 @@ program
     ) =>
       broadcast(task, {
         peers: opts.peers,
+        cluster: opts.cluster,
         wait: opts.wait,
         waitTimeoutSeconds: opts.waitTimeout,
         strategy: (opts.strategy as "all" | "first") ?? "all",
         noCheck: opts.check === false,
         json: opts.json,
       }),
+  );
+
+// ── hh sync ───────────────────────────────────────────────────────────────────
+program
+  .command("sync")
+  .description("Push a local path to the H2 peer over Tailscale SSH using rsync")
+  .argument("<path>", "Local file or directory to sync")
+  .option("--dest <path>", "Remote destination path (default: ~/basename)")
+  .option("--peer <name>", "Target a specific peer node by name")
+  .option("--dry-run", "Preview transfers without writing to H2")
+  .option("--delete", "Delete remote files not present locally (rsync --delete)")
+  .option("--watch", "Re-sync automatically on local file changes")
+  .option("--watch-interval <ms>", "Debounce interval for --watch mode (default: 1000ms)")
+  .action(
+    (
+      localPath: string,
+      opts: {
+        dest?: string;
+        peer?: string;
+        dryRun?: boolean;
+        delete?: boolean;
+        watch?: boolean;
+        watchInterval?: string;
+      },
+    ) =>
+      sync(localPath, {
+        dest: opts.dest,
+        peer: opts.peer,
+        dryRun: opts.dryRun,
+        delete: opts.delete,
+        watch: opts.watch,
+        watchIntervalMs: opts.watchInterval ? parseInt(opts.watchInterval, 10) : undefined,
+      }),
+  );
+
+// ── hh clusters / hh cluster ──────────────────────────────────────────────────
+
+program
+  .command("clusters")
+  .description("List all defined peer clusters (shorthand for hh cluster list)")
+  .option("--json", "Output as JSON")
+  .action((opts: { json?: boolean }) => clusterList(opts));
+
+const clusterCmd = program
+  .command("cluster")
+  .description("Manage named peer groups for cluster-targeted dispatch");
+
+clusterCmd
+  .command("list")
+  .alias("ls")
+  .description("List all defined clusters")
+  .option("--json", "Output as JSON")
+  .action((opts: { json?: boolean }) => clusterList(opts));
+
+clusterCmd
+  .command("add <name>")
+  .description("Define a new named cluster (or overwrite an existing one)")
+  .requiredOption("--peers <names>", "Comma-separated peer names to include in the cluster")
+  .option("--no-validate", "Skip peer name validation against the current roster")
+  .option("--json", "Output result as JSON")
+  .action((name: string, opts: { peers: string; validate?: boolean; json?: boolean }) =>
+    clusterAdd(name, {
+      peers: opts.peers,
+      noValidate: opts.validate === false,
+      json: opts.json,
+    }),
+  );
+
+clusterCmd
+  .command("show <name>")
+  .description("Show peers in a named cluster")
+  .option("--json", "Output as JSON")
+  .action((name: string, opts: { json?: boolean }) => clusterShow(name, opts));
+
+clusterCmd
+  .command("remove <name>")
+  .alias("rm")
+  .description("Remove a named cluster")
+  .option("--force", "Skip confirmation prompt")
+  .option("--json", "Output result as JSON")
+  .action((name: string, opts: { force?: boolean; json?: boolean }) => clusterRemove(name, opts));
+
+const clusterPeersCmd = clusterCmd
+  .command("peers")
+  .description("Add or remove individual peers from a cluster");
+
+clusterPeersCmd
+  .command("add <cluster> <peer>")
+  .description("Add a peer to an existing cluster")
+  .option("--no-validate", "Skip peer name validation")
+  .option("--json", "Output updated cluster as JSON")
+  .action((clusterName: string, peerName: string, opts: { validate?: boolean; json?: boolean }) =>
+    clusterPeersAdd(clusterName, peerName, {
+      noValidate: opts.validate === false,
+      json: opts.json,
+    }),
+  );
+
+clusterPeersCmd
+  .command("remove <cluster> <peer>")
+  .alias("rm")
+  .description("Remove a peer from a cluster")
+  .option("--json", "Output updated cluster as JSON")
+  .action((clusterName: string, peerName: string, opts: { json?: boolean }) =>
+    clusterPeersRemove(clusterName, peerName, opts),
   );
 
 program.parseAsync();

@@ -21,6 +21,8 @@ import { getAllPeers } from "../peers/select.ts";
 export interface PeersOptions {
   ping?: boolean;
   json?: boolean;
+  /** Filter to peers belonging to this cluster name. */
+  cluster?: string;
 }
 
 interface PeerStatus {
@@ -44,7 +46,23 @@ export async function peers(opts: PeersOptions = {}) {
     return;
   }
 
-  const allPeers = getAllPeers(config);
+  let allPeers = getAllPeers(config);
+
+  // ── Apply --cluster filter ─────────────────────────────────────────────────
+  if (opts.cluster) {
+    const clusterMap = config.clusters ?? {};
+    const clusterPeerNames = clusterMap[opts.cluster];
+    if (!clusterPeerNames) {
+      const defined = Object.keys(clusterMap);
+      p.log.error(
+        `Cluster ${pc.yellow(JSON.stringify(opts.cluster))} not found. ` +
+        (defined.length > 0 ? `Defined: ${defined.join(", ")}` : "No clusters defined yet."),
+      );
+      process.exitCode = 1;
+      return;
+    }
+    allPeers = allPeers.filter((peer) => clusterPeerNames.includes(peer.name));
+  }
 
   const statuses: PeerStatus[] = await Promise.all(
     allPeers.map(async (peer, i): Promise<PeerStatus> => {
@@ -77,7 +95,8 @@ export async function peers(opts: PeersOptions = {}) {
     return;
   }
 
-  p.intro(`${pc.bold("Configured peers")} (${allPeers.length} total)`);
+  const clusterTag = opts.cluster ? ` · cluster: ${pc.cyan(opts.cluster)}` : "";
+  p.intro(`${pc.bold("Configured peers")} (${allPeers.length} total${clusterTag})`);
 
   for (const s of statuses) {
     const tag = s.primary ? pc.bold(pc.yellow("★ primary")) : pc.dim("  peer");

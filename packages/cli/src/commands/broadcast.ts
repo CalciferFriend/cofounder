@@ -38,6 +38,8 @@ export type BroadcastStrategy = "all" | "first";
 export interface BroadcastOptions {
   /** Comma-separated peer names. Defaults to all configured peers. */
   peers?: string;
+  /** Named cluster to resolve peers from (mutually exclusive with peers). */
+  cluster?: string;
   /** Wait for result(s) before exiting. */
   wait?: boolean;
   /** How long to wait for results (seconds). Default: 120. */
@@ -260,7 +262,33 @@ export async function broadcast(task: string, opts: BroadcastOptions = {}) {
   // ── Resolve target peers ───────────────────────────────────────────────────
   let targets: PeerNodeConfig[];
 
-  if (opts.peers) {
+  if (opts.cluster && opts.peers) {
+    p.outro(pc.red("--cluster and --peers are mutually exclusive. Use one or the other."));
+    process.exitCode = 1;
+    return;
+  }
+
+  if (opts.cluster) {
+    // Resolve peer names from the named cluster
+    const clusterMap = config.clusters ?? {};
+    const clusterPeerNames = clusterMap[opts.cluster];
+    if (!clusterPeerNames) {
+      const defined = Object.keys(clusterMap);
+      p.outro(
+        pc.red(`Cluster "${opts.cluster}" not found.`) +
+        (defined.length > 0 ? ` Defined: ${defined.join(", ")}` : " No clusters defined yet (run hh cluster add)."),
+      );
+      process.exitCode = 1;
+      return;
+    }
+    targets = clusterPeerNames.map((name) => {
+      const peer = findPeerByName(config, name);
+      if (!peer) {
+        p.log.warn(`Cluster peer ${pc.yellow(name)} not found in config — skipping`);
+      }
+      return peer;
+    }).filter((p): p is PeerNodeConfig => p !== null);
+  } else if (opts.peers) {
     const names = opts.peers.split(",").map((n) => n.trim());
     targets = names.map((name) => {
       const peer = findPeerByName(config, name);

@@ -105,6 +105,14 @@ export const HHConfig = z.object({
     /** Path to openclaw.json on this machine */
     config_path: z.string().optional(),
   }).optional(),
+  /**
+   * Named peer groups for cluster-targeted dispatch.
+   * Keys are group names (e.g. "gpu", "fast"); values are arrays of peer names.
+   * Managed via `hh cluster add/remove`; used by `hh broadcast --cluster`.
+   *
+   * Example: { gpu: ["glados", "piper"], fast: ["forge"] }
+   */
+  clusters: z.record(z.string(), z.array(z.string())).optional(),
 });
 export type HHConfig = z.infer<typeof HHConfig>;
 
