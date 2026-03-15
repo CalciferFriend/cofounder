@@ -39,6 +39,8 @@ import {
   cronRetryDecisionAsync,
   type ResultWebhookPayload,
   deliverNotification,
+  checkBudget,
+  broadcastNotification,
 } from "@his-and-hers/core";
 import { createTaskState, pollTaskCompletion, updateTaskState } from "../state/tasks.ts";
 import { getPeer, selectBestPeer, formatPeerList } from "../peers/select.ts";
@@ -68,7 +70,7 @@ async function fireNotifications(
 ): Promise<void> {
   const tasks: Promise<void>[] = [];
 
-  // Ad-hoc --notify URL
+  // Ad-hoc --notify URL (legacy --notify flag, still supported)
   if (adHocUrl) {
     tasks.push(
       deliverNotification(adHocUrl, ctx).then((ok) => {
@@ -81,7 +83,7 @@ async function fireNotifications(
     );
   }
 
-  // Persistent webhooks from hh notify add
+  // Legacy persistent webhooks from `hh notify add` (notify/config.ts store)
   const persisted = await getActiveWebhooks(ctx.success).catch(() => []);
   for (const wh of persisted) {
     tasks.push(
@@ -95,6 +97,22 @@ async function fireNotifications(
       }),
     );
   }
+
+  // ─── Phase 12b: Phase 11c targets (event-typed, HMAC-signed) ───────────────
+  // broadcastNotification handles target filtering by event type + parallel delivery.
+  const event = ctx.success ? "task_completed" : "task_failed";
+  tasks.push(
+    broadcastNotification(event, {
+      task_id: ctx.taskId,
+      peer: ctx.peer,
+      objective: ctx.task,
+      output: ctx.output,
+      duration_ms: ctx.durationMs,
+      cost_usd: ctx.costUsd,
+      success: ctx.success,
+      timestamp: new Date().toISOString(),
+    }),
+  );
 
   await Promise.allSettled(tasks);
 }
@@ -318,6 +336,57 @@ export async function send(task: string, opts: SendOptions = {}) {
   }
   gwS.stop(pc.green("✓ Gateway ready"));
 
+  // ─── Phase 12a: Budget gate ─────────────────────────────────────────────────
+  // Check spend caps before dispatching. Block if action=block and cap exceeded;
+  // warn (and fire budget_warn notification) if action=warn or at >80% threshold.
+  {
+    const budgetCheck = await checkBudget(peer.name, 0).catch(() => null);
+    if (budgetCheck && budgetCheck.reason) {
+      if (!budgetCheck.allowed) {
+        // Hard block
+        p.log.error(pc.red(`✗ Budget cap exceeded: ${budgetCheck.reason}`));
+        p.log.info(
+          pc.dim(
+            `Daily: $${budgetCheck.spent_today.toFixed(4)}  Monthly: $${budgetCheck.spent_month.toFixed(4)}  ` +
+            `Cap: $${budgetCheck.limit.toFixed(2)} (${budgetCheck.limit_type})`,
+          ),
+        );
+        p.log.info(pc.dim(`Adjust the cap with: hh budget-cap set ${peer.name} --action warn`));
+        p.outro("Send blocked by budget policy.");
+        // Fire budget_warn notification to all registered targets
+        broadcastNotification("budget_warn", {
+          peer: peer.name,
+          reason: budgetCheck.reason,
+          spent_today: budgetCheck.spent_today,
+          spent_month: budgetCheck.spent_month,
+          limit: budgetCheck.limit,
+          limit_type: budgetCheck.limit_type,
+          timestamp: new Date().toISOString(),
+        }).catch(() => {});
+        return;
+      } else {
+        // Soft warning — show but continue
+        p.log.warn(pc.yellow(`⚠ Budget warning: ${budgetCheck.reason}`));
+        p.log.info(
+          pc.dim(
+            `Daily: $${budgetCheck.spent_today.toFixed(4)}  Monthly: $${budgetCheck.spent_month.toFixed(4)}  ` +
+            `Cap: $${budgetCheck.limit.toFixed(2)} (${budgetCheck.limit_type})`,
+          ),
+        );
+        // Fire budget_warn notification even on soft warn
+        broadcastNotification("budget_warn", {
+          peer: peer.name,
+          reason: budgetCheck.reason,
+          spent_today: budgetCheck.spent_today,
+          spent_month: budgetCheck.spent_month,
+          limit: budgetCheck.limit,
+          limit_type: budgetCheck.limit_type,
+          timestamp: new Date().toISOString(),
+        }).catch(() => {});
+      }
+    }
+  }
+
   // Phase 7d: load file attachments
   let attachments: AttachmentPayload[] = [];
   if (opts.attach && opts.attach.length > 0) {
@@ -520,6 +589,14 @@ export async function send(task: string, opts: SendOptions = {}) {
   }).catch(() => {
     // Soft fail — audit entry is best-effort
   });
+
+  // ─── Phase 12b: Broadcast task_sent to registered notify targets ────────────
+  broadcastNotification("task_sent", {
+    task_id: msg.id,
+    peer: peer.name,
+    objective: task,
+    timestamp: new Date().toISOString(),
+  }).catch(() => {});
 
   // Step 6: wait for result if --wait flag
   if (opts.wait) {

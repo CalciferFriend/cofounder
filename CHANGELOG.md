@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Phase 12 — Budget gate + notification event wiring in `hh send`**
+  - **Budget gate** (`checkBudget()` in `hh send`): before any dispatch, the configured
+    per-peer budget cap is evaluated. If `action=block` and the daily/monthly cap is
+    exceeded, the send is rejected with a clear error and exit message. If `action=warn`
+    (or at >80% threshold), a warning is displayed but dispatch continues. In both cases
+    a `budget_warn` event is broadcast to all registered notify targets.
+  - **`task_sent` broadcast**: after successful delivery, `broadcastNotification("task_sent",…)`
+    fires to all `hh notify-target` entries subscribed to `task_sent`, carrying
+    `task_id`, `peer`, `objective`, and `timestamp`.
+  - **`task_completed` / `task_failed` via Phase 11c targets**: `fireNotifications()`
+    now calls `broadcastNotification(event, …)` alongside the legacy `getActiveWebhooks()`
+    path, delivering to all named targets with HMAC-SHA256 signing support.
+  - Fail-open: if `checkBudget()` throws (missing store, etc.), dispatch proceeds normally.
+  - 15 new tests in `send.test.ts` covering all four paths above.
+  - Tests: 1071 → **1086** (all passing, 1 skipped)
+
 - **`hh web`** — local web dashboard with live task feed. Single-page HTTP server (Node built-ins only)
   serving a live task feed via SSE (`GET /events`). Peer status sidebar with gateway health + Tailscale
   ping. Budget panel showing weekly cloud/local/total spend. Send-task form in sidebar. Task list with

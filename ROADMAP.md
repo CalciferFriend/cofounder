@@ -667,6 +667,29 @@ context and `docs/latent-communication.md` for implementation guide. ✅ (2026-0
 
 ---
 
+## Phase 12 — Budget Gate + Notification Event Wiring ✅ (2026-03-15)
+
+> Owned by: Calcifer (H1)
+
+### 12a. Budget gate in `hh send` (Calcifer) ✅ (2026-03-15)
+- [x] Call `checkBudget(peer, 0)` before dispatch — evaluates daily/monthly caps from Phase 11b
+- [x] `allowed: false` (action=block, cap exceeded) → reject send, print clear error + `p.outro("Send blocked by budget policy.")`
+- [x] `allowed: true, reason set` (>80% or action=warn) → show `p.log.warn`, continue dispatch
+- [x] `budget_warn` broadcast fires in both warn and block paths via `broadcastNotification()`
+- [x] Fail-open: if `checkBudget()` throws (missing store, disk error), dispatch proceeds normally
+- [x] Shows spend breakdown (daily / monthly / cap / limit_type) on both warn and block
+
+### 12b. Notification event wiring in `hh send` (Calcifer) ✅ (2026-03-15)
+- [x] `broadcastNotification("task_sent", { task_id, peer, objective, timestamp })` fires after successful delivery
+- [x] `broadcastNotification("task_completed", …)` + `broadcastNotification("task_failed", …)` added to `fireNotifications()`
+- [x] Runs alongside legacy `getActiveWebhooks()` (Phase 5g) path — no breaking change
+- [x] Phase 11c targets (named, HMAC-signed, event-filtered) now receive all 4 event types end-to-end
+- [x] 15 new tests in `packages/cli/src/commands/send.test.ts`
+
+**Phase 12 complete: 1086 tests passing (up from 1071). Budget gate and full notification event loop wired.**
+
+---
+
 ## Who Owns What
 
 | Area | Owner |
