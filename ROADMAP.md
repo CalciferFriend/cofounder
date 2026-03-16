@@ -690,6 +690,25 @@ context and `docs/latent-communication.md` for implementation guide. ✅ (2026-0
 
 ---
 
+## Phase 13 — `hh chat` test suite + `hh context` CLI ✅ (2026-03-16)
+
+> Owned by: Calcifer (H1)
+
+### 13a. `hh chat` test suite (Calcifer) ✅ (2026-03-16)
+- [x] 22 tests in `chat.test.ts` covering happy path, polling fallback, WOL wake, gateway down, timeout, exit keywords, `.context`/`.clear` slash commands, `--no-context` flag, context carry-over, session summary
+- [x] Mocks: `readline.createInterface`, `wakeAgent`, `pingPeer`, `checkGatewayHealth`, `startResultServer`, `startStreamServer`, `createTaskState`, `updateTaskState`, `loadContextSummary`, `appendContextEntry`, `process.exit`
+
+### 13b. `hh context` — per-peer context management CLI (Calcifer) ✅ (2026-03-16)
+- [x] `hh context list` — scan `~/.his-and-hers/context/` and show peer names, entry counts, and most recent timestamp
+- [x] `hh context show <peer>` — display all stored context entries for a peer
+- [x] `hh context clear <peer>` — wipe context for a peer (calls `clearContextEntries()`)
+- [x] `hh context prune [--days <n>]` — remove entries older than N days (default: 30)
+- [x] 15 tests in `context.test.ts`
+
+**Phase 13 complete: 1123 tests passing (up from 1086). `hh chat` fully tested + context management CLI added.**
+
+---
+
 ## Who Owns What
 
 | Area | Owner |

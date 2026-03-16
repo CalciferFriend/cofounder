@@ -23,6 +23,7 @@ import { publish } from "./commands/publish.ts";
 import { discover } from "./commands/discover.ts";
 import { logs } from "./commands/logs.ts";
 import { configShow, configGet, configSet, configPath } from "./commands/config.ts";
+import { contextList, contextShow, contextClear, contextPrune } from "./commands/context.ts";
 import { hhTest } from "./commands/test.ts";
 import { upgrade } from "./commands/upgrade.ts";
 import { replay } from "./commands/replay.ts";
@@ -439,6 +440,36 @@ configCmd
   .command("path")
   .description("Print config file path (machine-readable)")
   .action(() => configPath());
+
+// ─── Context ─────────────────────────────────────────────────────────────────
+
+const contextCmd = program
+  .command("context")
+  .description("Manage per-peer context history")
+  .action(() => contextList());
+
+contextCmd
+  .command("list")
+  .description("List peers with stored context")
+  .action(() => contextList());
+
+contextCmd
+  .command("show")
+  .argument("<peer>", "Peer name")
+  .description("Show context entries for a peer")
+  .action((peer: string) => contextShow(peer));
+
+contextCmd
+  .command("clear")
+  .argument("<peer>", "Peer name")
+  .description("Clear context for a peer")
+  .action((peer: string) => contextClear(peer));
+
+contextCmd
+  .command("prune")
+  .description("Remove context entries older than N days")
+  .option("--days <n>", "Age threshold in days", "30")
+  .action((opts: { days: string }) => contextPrune(Number(opts.days)));
 
 // ─── Test ─────────────────────────────────────────────────────────────────────
 

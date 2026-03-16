@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Phase 13 — `hh chat` test suite + `hh context` CLI**
+  - **`chat.test.ts`**: 22 tests covering all major paths in `hh chat` — happy path (single turn with webhook result), polling fallback (no webhook server), WOL wake (peer offline → wake succeeds/fails), gateway-down failure (peer up but gateway not responding), send failure (SSH connection failed), timeout path (turn times out), exit keywords (`exit`, `quit`, `.q`), `.context`/`.clear` slash commands (show/clear stored context mid-session), `--no-context` flag (skips loadContextSummary), context carry-over (H2's `context_summary` forwarded to turn 2), `--peer` option (selects correct peer), session summary output (printed at exit when turns > 0, not printed when no turns completed), turn failure recovery (turn fails gracefully, loop continues), token/cost accumulation across turns.
+  - **`hh context list/show/clear/prune`**: inspect and manage per-peer context history from the CLI. `list` scans `~/.his-and-hers/context/*.json` and shows peer name, entry count, and most recent timestamp. `show <peer>` displays all stored context entries for a peer. `clear <peer>` wipes context for a peer (calls `clearContextEntries()`). `prune [--days <n>]` removes entries older than N days (default 30).
+  - **`context.test.ts`**: 15 tests covering list (empty case, single peer, multiple peers sorted by most recent, peer with zero entries), show (displays entries, handles unknown peer, formats summaries), clear (calls clearContextEntries, confirms message, sets exitCode on error), prune (removes old entries, keeps recent ones, default 30 days, custom --days, logs step for each peer, handles multiple peers).
+  - Tests: 1086 → **1123** (all passing except 3 pre-existing failures in `mcp.test.ts` and `schedule.test.ts`)
+
 - **Phase 12 — Budget gate + notification event wiring in `hh send`**
   - **Budget gate** (`checkBudget()` in `hh send`): before any dispatch, the configured
     per-peer budget cap is evaluated. If `action=block` and the daily/monthly cap is
