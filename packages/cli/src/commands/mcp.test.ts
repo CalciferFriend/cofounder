@@ -94,7 +94,6 @@ vi.mock("../peers/select.ts", () => ({
 }));
 
 beforeEach(() => vi.clearAllMocks());
-afterEach(() => vi.restoreAllMocks());
 
 // ─── buildToolList ─────────────────────────────────────────────────────────────
 

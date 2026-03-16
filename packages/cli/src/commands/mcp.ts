@@ -743,11 +743,11 @@ export async function handleToolsCall(
   params: unknown,
 ): Promise<JsonRpcResponse> {
   const p = params as { name?: string; arguments?: Record<string, unknown> };
-  if (!p.name) {
+  if (!p || !p.name) {
     return {
       jsonrpc: "2.0",
       id,
-      error: { code: -32602, message: "Missing tool name" },
+      result: errorResult("Missing tool name"),
     };
   }
 
