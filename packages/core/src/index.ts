@@ -284,3 +284,15 @@ export type {
   StepFinisher,
   TraceStepName,
 } from "./trace/trace.ts";
+
+// ─── Phase 17b: Task Tagging ──────────────────────────────────────────────────
+export {
+  validateTag,
+  addTag,
+  removeTag,
+  getTagRecord,
+  listTagRecords,
+  findByTag,
+  clearTagRecord,
+} from "./tag/tag.ts";
+export type { TagRecord } from "./tag/tag.ts";

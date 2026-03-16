@@ -124,6 +124,8 @@ export default defineConfig({
             { text: "hh run", link: "/reference/run" },
             { text: "hh alias", link: "/reference/alias" },
             { text: "hh trace", link: "/reference/trace" },
+            { text: "hh health-report", link: "/reference/health-report" },
+            { text: "hh tag", link: "/reference/tag" },
           ],
         },
         {

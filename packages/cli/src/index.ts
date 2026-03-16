@@ -95,6 +95,7 @@ import { ask } from "./commands/ask.ts";
 import { serve } from "./commands/serve.ts";
 import { trace } from "./commands/trace.ts";
 import { healthReport } from "./commands/health-report.ts";
+import { tagAdd, tagRemove, tagList, tagSearch, tagClear } from "./commands/tag.ts";
 import {
   budgetList,
   budgetSet,
@@ -1370,5 +1371,50 @@ program
       verifyAudit: opts.verifyAudit !== false,
     })
   );
+
+// ── hh tag ────────────────────────────────────────────────────────────────────
+const tagCmd = program
+  .command("tag")
+  .description(
+    "Tag tasks for filtering and search.\n\n" +
+      "  hh tag add <id> <tags...>    Add tags to a task\n" +
+      "  hh tag remove <id> <tags...> Remove tags from a task\n" +
+      "  hh tag list [id]             List tags (all tasks or specific task)\n" +
+      "  hh tag search <tag>          Find tasks with a given tag\n" +
+      "  hh tag clear <id>            Remove all tags from a task",
+  );
+
+tagCmd
+  .command("add <id> <tags...>")
+  .description("Add tags to a task (prefix match on task ID)")
+  .option("--note <text>", "Optional note to attach to the tag record")
+  .option("--json", "Output as JSON")
+  .action((id: string, tags: string[], opts: { note?: string; json?: boolean }) =>
+    tagAdd(id, tags, opts),
+  );
+
+tagCmd
+  .command("remove <id> <tags...>")
+  .description("Remove specific tags from a task")
+  .action((id: string, tags: string[]) => tagRemove(id, tags));
+
+tagCmd
+  .command("list [id]")
+  .alias("ls")
+  .description("List tags for a specific task or all tagged tasks")
+  .option("--json", "Output as JSON")
+  .action((id: string | undefined, opts: { json?: boolean }) => tagList(id, opts));
+
+tagCmd
+  .command("search <tag>")
+  .description("Find all tasks with a given tag")
+  .option("--json", "Output as JSON")
+  .action((tag: string, opts: { json?: boolean }) => tagSearch(tag, opts));
+
+tagCmd
+  .command("clear <id>")
+  .description("Remove all tags from a task")
+  .option("--force", "Skip confirmation prompt")
+  .action((id: string, opts: { force?: boolean }) => tagClear(id, opts));
 
 program.parseAsync();

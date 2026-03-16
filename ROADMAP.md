@@ -810,6 +810,32 @@ Missing: a programmable HTTP API. `hh serve` fills that gap.
 
 ---
 
+## Phase 17 — Health Reports & Task Tagging ✅ (2026-03-16)
+
+> Owned by: Calcifer (H1)
+
+### 17a. `hh health-report` — weekly health digest (Calcifer) ✅ (2026-03-16)
+- [x] Wire `healthReport` into CLI index.ts
+- [x] `hh health-report [--days 7] [--peer] [--out] [--json] [--webhook] [--no-verify-audit]`
+- [x] Combines stats, budget, audit chain, peer uptime, anomaly detection into Markdown report
+- [x] 39 tests in `health-report.test.ts`
+
+### 17b. `hh tag` — task tagging & search (Calcifer) ✅ (2026-03-16)
+- [x] `TagRecord` schema: `{ task_id, tags[], note?, tagged_at }` in `@his-and-hers/core`
+- [x] `addTag / removeTag / getTagRecord / listTagRecords / findByTag / clearTagRecord` storage helpers
+- [x] `validateTag` — lowercase, alphanumeric + hyphen, max 32 chars, max 20 per task
+- [x] `hh tag add <id> <tags...> [--note <text>]` — add tags to a task (prefix match)
+- [x] `hh tag remove <id> <tags...>` — remove specific tags
+- [x] `hh tag list [id] [--json]` — list tags (all tasks or specific task)
+- [x] `hh tag search <tag> [--json]` — find all tasks with a given tag
+- [x] `hh tag clear <id> [--force]` — remove all tags from task
+- [x] 29 core tests + 15 CLI tests; total: **1350 tests** (all passing)
+- [x] `docs/reference/tag.md` reference page + sidebar wired
+
+**Phase 17 complete: 1350 tests passing (up from 1267). `hh health-report` + `hh tag` shipped.**
+
+---
+
 ## Who Owns What
 
 | Area | Owner |
