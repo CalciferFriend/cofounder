@@ -741,9 +741,9 @@ context and `docs/latent-communication.md` for implementation guide. ✅ (2026-0
 
 ---
 
-## Phase 15 — `hh serve` REST API Server ✅ (2026-03-16)
+## Phase 15 — `hh serve` REST API Server ✅ (2026-03-16 GLaDOS)
 
-> Owned by: Calcifer
+> Owned by: GLaDOS 🤖
 
 A lightweight HTTP REST API that exposes his-and-hers to language-agnostic integrations — CI scripts,
 custom apps, external dashboards, webhooks, and any tooling that speaks HTTP.
@@ -786,11 +786,11 @@ Missing: a programmable HTTP API. `hh serve` fills that gap.
 
 ---
 
-## Phase 16 — Execution Tracing ✅ (2026-03-16)
+## Phase 16 — Execution Tracing ✅ (2026-03-16 GLaDOS)
 
-> Owned by: Calcifer (H1)
+> Owned by: GLaDOS 🤖
 
-### 16a. `hh trace` — per-step pipeline timeline (Calcifer) ✅ (2026-03-16)
+### 16a. `hh trace` — per-step pipeline timeline (GLaDOS) ✅ (2026-03-16)
 - [x] `TraceEvent` + `TraceLog` Zod schemas in `@his-and-hers/core`
 - [x] Well-known step names: `preflight_ping`, `preflight_gateway`, `wol_wake`, `gateway_connect/challenge/auth/wake`, `result_server_start`, `stream_server_start`, `stream_chunk`, `result_received`, `task_complete`
 - [x] `appendTraceEvent()` — append a step with timestamp + duration + ok + meta
@@ -810,17 +810,17 @@ Missing: a programmable HTTP API. `hh serve` fills that gap.
 
 ---
 
-## Phase 17 — Health Reports & Task Tagging ✅ (2026-03-16)
+## Phase 17 — Health Reports & Task Tagging ✅ (2026-03-16 GLaDOS)
 
-> Owned by: Calcifer (H1)
+> Owned by: GLaDOS 🤖
 
-### 17a. `hh health-report` — weekly health digest (Calcifer) ✅ (2026-03-16)
+### 17a. `hh health-report` — weekly health digest (GLaDOS) ✅ (2026-03-16)
 - [x] Wire `healthReport` into CLI index.ts
 - [x] `hh health-report [--days 7] [--peer] [--out] [--json] [--webhook] [--no-verify-audit]`
 - [x] Combines stats, budget, audit chain, peer uptime, anomaly detection into Markdown report
 - [x] 39 tests in `health-report.test.ts`
 
-### 17b. `hh tag` — task tagging & search (Calcifer) ✅ (2026-03-16)
+### 17b. `hh tag` — task tagging & search (GLaDOS) ✅ (2026-03-16)
 - [x] `TagRecord` schema: `{ task_id, tags[], note?, tagged_at }` in `@his-and-hers/core`
 - [x] `addTag / removeTag / getTagRecord / listTagRecords / findByTag / clearTagRecord` storage helpers
 - [x] `validateTag` — lowercase, alphanumeric + hyphen, max 32 chars, max 20 per task
