@@ -60,7 +60,7 @@ vi.mock("@his-and-hers/core", () => ({
   createTaskMessage: mockCreateTaskMessage,
   wakeAndWait: mockWakeAndWait,
 }));
-vi.mock("@his-and-hers/core/context/store.ts", () => ({
+vi.mock("@his-and-hers/core/context/store", () => ({
   loadContextSummary: mockLoadContextSummary,
   appendContextEntry: mockAppendContextEntry,
   buildContextSummary: mockBuildContextSummary,

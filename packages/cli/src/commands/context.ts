@@ -19,7 +19,7 @@ import {
   loadContextEntries,
   clearContextEntries,
   type ContextEntry,
-} from "@his-and-hers/core/context/store.ts";
+} from "@his-and-hers/core/context/store";
 import { writeFile } from "node:fs/promises";
 
 const CONTEXT_DIR = join(homedir(), ".his-and-hers", "context");

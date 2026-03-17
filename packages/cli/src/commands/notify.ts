@@ -34,8 +34,8 @@ import {
   removeNotifyWebhook,
   type HHNotifyEvent,
   type HHNotifyWebhook,
-} from "@his-and-hers/core/notify/config.ts";
-import { deliverNotification } from "@his-and-hers/core/notify/notify.ts";
+} from "@his-and-hers/core/notify/config";
+import { deliverNotification } from "@his-and-hers/core/notify/notify";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

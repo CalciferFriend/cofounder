@@ -31,6 +31,10 @@
     "./notify/notify": {
       "import": "./dist/notify/notify.js",
       "types": "./dist/notify/notify.d.ts"
+    },
+    "./context/store": {
+      "import": "./dist/context/store.js",
+      "types": "./dist/context/store.d.ts"
     }
   },
   "files": [

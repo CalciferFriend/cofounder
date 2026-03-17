@@ -25,7 +25,7 @@ vi.mock("node:fs/promises", () => ({
   writeFile: mockWriteFile,
 }));
 
-vi.mock("@his-and-hers/core/context/store.ts", () => ({
+vi.mock("@his-and-hers/core/context/store", () => ({
   loadContextEntries: mockLoadContextEntries,
   clearContextEntries: mockClearContextEntries,
 }));
@@ -39,7 +39,7 @@ vi.mock("@clack/prompts", () => ({
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
-import type { ContextEntry } from "@his-and-hers/core/context/store.ts";
+import type { ContextEntry } from "@his-and-hers/core/context/store";
 
 const ENTRY_1: ContextEntry = {
   task_id: "task-001",

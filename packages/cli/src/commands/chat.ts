@@ -41,7 +41,7 @@ import {
   appendContextEntry,
   buildContextSummary,
   type ContextEntry,
-} from "@his-and-hers/core/context/store.ts";
+} from "@his-and-hers/core/context/store";
 import { createTaskState, updateTaskState } from "../state/tasks.ts";
 import { getPeer } from "../peers/select.ts";
 

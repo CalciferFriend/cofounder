@@ -44,8 +44,8 @@ import {
 } from "@his-and-hers/core";
 import { createTaskState, pollTaskCompletion, updateTaskState } from "../state/tasks.ts";
 import { getPeer, selectBestPeer, formatPeerList } from "../peers/select.ts";
-import { getActiveWebhooks } from "@his-and-hers/core/notify/config.ts";
-import type { NotificationContext } from "@his-and-hers/core/notify/notify.ts";
+import { getActiveWebhooks } from "@his-and-hers/core/notify/config";
+import type { NotificationContext } from "@his-and-hers/core/notify/notify";
 import { loadAttachments, formatAttachmentSummary, appendAuditEntry } from "@his-and-hers/core";
 import type { AttachmentPayload } from "@his-and-hers/core";
 

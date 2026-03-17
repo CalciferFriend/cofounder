@@ -112,7 +112,7 @@ vi.mock("../peers/select.ts", () => ({
   formatPeerList: vi.fn(() => ""),
 }));
 
-vi.mock("@his-and-hers/core/notify/config.ts", () => ({
+vi.mock("@his-and-hers/core/notify/config", () => ({
   getActiveWebhooks: vi.fn(async () => []),
 }));
 
