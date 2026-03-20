@@ -241,9 +241,15 @@ export interface OnboardOptions {
 }
 
 export async function onboard(options: OnboardOptions = {}) {
-  // Fast onboarding mode: explicit --yes OR no TTY (AI agent / piped input)
-  if (options.yes || !process.stdin.isTTY) {
+  // --yes flag: silent auto-config (all values from flags + auto-detection)
+  if (options.yes) {
     return await fastOnboard(options);
+  }
+
+  // No TTY (AI agent / piped input): output conversational setup guide
+  // The agent relays the questions to the user, collects answers, then re-runs with --yes
+  if (!process.stdin.isTTY) {
+    return await conversationalOnboard(options);
   }
 
   // Play the intro animation, then print the persistent header
@@ -297,6 +303,161 @@ export async function onboard(options: OnboardOptions = {}) {
   ctx = await stepFinalize(ctx);
 
   p.outro(`Setup complete. Run ${pc.cyan("cofounder status")} to check your pair.`);
+}
+
+/**
+ * Conversational onboarding mode — for AI agents running without a TTY.
+ *
+ * Instead of skipping the wizard, this outputs a structured setup guide
+ * that the AI agent can relay to the user as a conversation. The agent
+ * collects the user's answers and re-runs with `--yes` and the appropriate flags.
+ *
+ * This preserves the branding and first-run experience even when an AI agent
+ * is mediating the setup.
+ */
+async function conversationalOnboard(options: OnboardOptions) {
+  const log = (msg: string) => console.log(msg);
+
+  // ── Branding — the agent should relay this to the user ─────────────────
+  log("");
+  log("═══════════════════════════════════════════════════════════════");
+  log("");
+  log("                      c o f o u n d e r");
+  log("");
+  log("           Two agents. Separate machines. One command.");
+  log("");
+  log("═══════════════════════════════════════════════════════════════");
+  log("");
+  log("Welcome! Let's set up cofounder on this machine.");
+  log("");
+  log("Cofounder connects two AI agents running on physically separate");
+  log("machines. One agent (H1) orchestrates — always on, always watching.");
+  log("The other (H2) executes — sleeps until needed, wakes on demand,");
+  log("does the heavy lifting, disappears when done.");
+  log("");
+  log("This wizard will configure this machine and pair it with a partner.");
+  log("Questions? Email Nic@virlo.ai");
+  log("");
+
+  // ── Auto-detect everything we can ──────────────────────────────────────
+  log("--- AUTO-DETECTED ENVIRONMENT ---");
+  log("");
+
+  const nodeVersion = process.version;
+  log(`Node.js:    ${nodeVersion}`);
+
+  const tsInstalled = await isTailscaleInstalled();
+  log(`Tailscale:  ${tsInstalled ? "installed" : "NOT INSTALLED — install from https://tailscale.com"}`);
+
+  let tsHostname = "";
+  let tsIP = "";
+  let tsPeers: Array<{ hostname: string; tailscaleIP: string; os: string; online: boolean }> = [];
+
+  if (tsInstalled) {
+    const ts = await getTailscaleStatus();
+    tsHostname = ts.hostname;
+    tsIP = ts.tailscaleIP;
+    log(`This node:  ${ts.hostname} (${ts.tailscaleIP}) — ${ts.online ? "online" : "OFFLINE"}`);
+
+    if (ts.online) {
+      tsPeers = await getTailscalePeers();
+      if (tsPeers.length > 0) {
+        log(`Tailscale peers on this network:`);
+        for (const peer of tsPeers) {
+          log(`  ${peer.online ? "●" : "○"} ${peer.hostname} (${peer.tailscaleIP}) — ${peer.os}`);
+        }
+      } else {
+        log(`No Tailscale peers found. The partner machine needs Tailscale too.`);
+      }
+    }
+  }
+
+  log(`Platform:   ${process.platform}`);
+  log(`OpenClaw:   ${(await checkCommandExists("openclaw")) ? "installed" : "not found"}`);
+
+  log("");
+
+  // ── Output the questions the agent should ask ──────────────────────────
+  log("--- SETUP QUESTIONS ---");
+  log("");
+  log("Ask the user these questions to configure cofounder. Use the");
+  log("auto-detected values as defaults where available.");
+  log("");
+
+  log("1. ROLE — What role should this machine play?");
+  log("   Options: h1 (orchestrator — always on, delegates work)");
+  log("            h2 (executor — heavy compute, sleeps when idle)");
+  if (tsHostname) {
+    const suggestedRole = process.platform === "win32" ? "h2" : "h1";
+    log(`   Suggested: ${suggestedRole} (based on platform: ${process.platform})`);
+  }
+  log(`   Flag: --role h1  OR  --role h2`);
+  log("");
+
+  log("2. NAME — What should this agent be called?");
+  log(`   Default: ${tsHostname || "hostname"}`);
+  log(`   Flag: --name <name>`);
+  log("");
+
+  log("3. PEER — Which Tailscale machine is the partner?");
+  if (tsPeers.length > 0) {
+    log("   Available peers:");
+    for (const peer of tsPeers) {
+      log(`     ${peer.hostname} (${peer.os}, ${peer.online ? "online" : "offline"})`);
+    }
+  } else {
+    log("   No peers detected. The user can provide a Tailscale hostname.");
+  }
+  log(`   Flag: --peer <hostname>`);
+  log("");
+
+  log("4. PEER SSH — How do we connect to the partner via SSH?");
+  log(`   SSH user flag:   --peer-ssh-user <username>`);
+  log(`   SSH key flag:    --peer-ssh-key <path>`);
+  log(`   Peer OS flag:    --peer-os linux|windows|macos`);
+  log("");
+
+  log("5. WAKE-ON-LAN (optional) — Can H1 wake H2 from sleep?");
+  log("   Only needed if H2 sleeps/shuts down between tasks.");
+  log(`   MAC flag:        --wol-mac <AA:BB:CC:DD:EE:FF>`);
+  log(`   Broadcast flag:  --wol-broadcast-ip <IP>`);
+  log("");
+
+  // ── Output the command to run ──────────────────────────────────────────
+  log("--- NEXT STEP ---");
+  log("");
+  log("After collecting the user's answers, run cofounder onboard with --yes");
+  log("and the appropriate flags. Example:");
+  log("");
+
+  // Build example command from any flags already provided
+  const parts = ["cofounder onboard --yes"];
+  parts.push(`--role ${options.role || "<ROLE>"}`);
+  parts.push(`--name ${options.name || tsHostname || "<NAME>"}`);
+  if (tsPeers.length === 1) {
+    parts.push(`--peer ${tsPeers[0].hostname}`);
+  } else {
+    parts.push(`--peer ${options.peer || "<PEER_HOSTNAME>"}`);
+  }
+  parts.push(`--peer-ssh-user ${options.peerSshUser || "<SSH_USER>"}`);
+  parts.push(`--peer-ssh-key ${options.peerSshKey || "<SSH_KEY_PATH>"}`);
+
+  log(`  ${parts.join(" \\\n    ")}`);
+  log("");
+  log("The --yes flag runs the full setup non-interactively using the");
+  log("provided flags and auto-detected values.");
+  log("");
+}
+
+async function checkCommandExists(cmd: string): Promise<boolean> {
+  try {
+    const { execFile: ef } = await import("node:child_process");
+    const { promisify: pfy } = await import("node:util");
+    await pfy(ef)(cmd, ["--version"], { timeout: 5000 });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**

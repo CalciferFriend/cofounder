@@ -164,7 +164,7 @@ $settings = New-ScheduledTaskSettingsSet `
   -ExecutionTimeLimit (New-TimeSpan -Hours 0)  # no time limit
 
 Register-ScheduledTask `
-  -TaskName "HisAndHersGateway" `
+  -TaskName "CofounderGateway" `
   -Action $action `
   -Trigger $trigger `
   -Settings $settings `
@@ -172,7 +172,7 @@ Register-ScheduledTask `
   -Force
 
 # Verify it's registered
-Get-ScheduledTask -TaskName "HisAndHersGateway"
+Get-ScheduledTask -TaskName "CofounderGateway"
 ```
 
 ---
@@ -186,7 +186,7 @@ Allow inbound TCP on the gateway port (default 3737):
 $port = 3737
 
 New-NetFirewallRule `
-  -DisplayName "His-and-Hers Gateway" `
+  -DisplayName "Cofounder Gateway" `
   -Direction Inbound `
   -Protocol TCP `
   -LocalPort $port `
@@ -194,7 +194,7 @@ New-NetFirewallRule `
   -Profile Any
 
 # Verify
-Get-NetFirewallRule -DisplayName "His-and-Hers Gateway"
+Get-NetFirewallRule -DisplayName "Cofounder Gateway"
 ```
 
 If you changed the gateway port during `cofounder onboard`, use that port number instead.
@@ -278,7 +278,7 @@ Check Windows Event Viewer → Windows Logs → Application for errors from `cmd
 
 Also verify the Scheduled Task ran:
 ```powershell
-Get-ScheduledTaskInfo -TaskName "HisAndHersGateway"
+Get-ScheduledTaskInfo -TaskName "CofounderGateway"
 # Check LastRunTime and LastTaskResult (0 = success)
 ```
 
