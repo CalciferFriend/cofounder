@@ -21,10 +21,13 @@ export async function status() {
   p.log.info(`${thisNode.emoji ?? "🖥"} ${pc.bold(thisNode.name)} (${thisNode.role})`);
   p.log.info(`  Tailscale: ${thisNode.tailscale_hostname} (${thisNode.tailscale_ip})`);
   p.log.info(`  Model: ${thisNode.provider?.model ?? "unknown"}`);
-  p.log.info(`  Gateway: ws://127.0.0.1:${config.gateway_port ?? 18789}`);
+  const localGwBind = thisNode.gateway?.bind ?? "loopback";
+  const localGwHost = localGwBind === "loopback" ? "127.0.0.1" : thisNode.tailscale_ip;
+  const localGwPort = thisNode.gateway?.port ?? config.gateway_port ?? 18789;
+  p.log.info(`  Gateway: ws://${localGwHost}:${localGwPort}`);
 
   // Local gateway health
-  const localHealth = await checkGatewayHealth(`http://127.0.0.1:${config.gateway_port ?? 18789}/health`);
+  const localHealth = await checkGatewayHealth(`http://${localGwHost}:${localGwPort}/health`);
   p.log.info(`  Gateway health: ${localHealth ? pc.green("✓ live") : pc.red("✗ unreachable")}`);
 
   p.log.message("");
