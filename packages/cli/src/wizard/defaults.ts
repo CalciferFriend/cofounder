@@ -49,8 +49,8 @@ export function createDefaultContext(opts: FastOnboardOptions = {}): Partial<Wiz
     },
 
     // Gateway bind defaults (smart defaults based on role)
-    thisBindMode: role === "h1" ? "loopback" : "tailscale",
-    peerBindMode: role === "h1" ? "tailscale" : "loopback",
+    thisBindMode: role === "h1" ? "loopback" : "tailnet",
+    peerBindMode: role === "h1" ? "tailnet" : "loopback",
     peerGatewayPort: 18789,
 
     // WOL defaults

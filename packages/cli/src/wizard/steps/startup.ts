@@ -14,7 +14,7 @@ const STARTUP_BAT = `@echo off
 :: Installed by cofounder onboard
 ::
 :: Both services run in separate console windows so this script can exit cleanly.
-:: The Scheduled Task (HH-OpenClawGateway) calls this file on every logon.
+:: The Scheduled Task (Cofounder-OpenClawGateway) calls this file on every logon.
 
 echo [CF] Waiting for Tailscale to come online...
 :wait_tailscale
@@ -30,10 +30,10 @@ cd /d "%USERPROFILE%"
 cofounder capabilities scan --quiet 2>nul
 
 echo [CF] Starting OpenClaw gateway...
-start "HH-Gateway" /min openclaw gateway
+start "Cofounder-Gateway" /min openclaw gateway
 
 echo [CF] Starting cofounder watch daemon (capabilities server)...
-start "HH-Watch" /min cofounder watch --serve-capabilities
+start "Cofounder-Watch" /min cofounder watch --serve-capabilities
 
 echo [CF] All services started.
 `;
@@ -89,7 +89,7 @@ async function installWindowsLocalStartup(): Promise<{ ok: boolean; batPath: str
     // Scheduled Task as belt-and-suspenders (survives if Startup folder is skipped)
     await execFileAsync("schtasks", [
       "/Create",
-      "/TN", "HH-OpenClawGateway",
+      "/TN", "Cofounder-OpenClawGateway",
       "/TR", batPath,
       "/SC", "ONLOGON",
       "/RL", "HIGHEST",
@@ -100,10 +100,10 @@ async function installWindowsLocalStartup(): Promise<{ ok: boolean; batPath: str
 
     // Verify the task was created
     const { stdout: taskCheck } = await execFileAsync("schtasks", [
-      "/Query", "/TN", "HH-OpenClawGateway",
+      "/Query", "/TN", "Cofounder-OpenClawGateway",
     ], { timeout: 5_000 }).catch(() => ({ stdout: "" }));
 
-    return { ok: true, batPath, error: taskCheck.includes("HH-OpenClawGateway") ? undefined : "Scheduled Task not confirmed (Startup folder is still active)" };
+    return { ok: true, batPath, error: taskCheck.includes("Cofounder-OpenClawGateway") ? undefined : "Scheduled Task not confirmed (Startup folder is still active)" };
   } catch (err: unknown) {
     return { ok: false, batPath: "", error: err instanceof Error ? err.message : String(err) };
   }
@@ -197,7 +197,7 @@ export async function stepStartup(ctx: Partial<WizardContext>): Promise<Partial<
       // Scheduled Task on remote
       await sshExec(
         sshConfig,
-        `schtasks /Create /TN "HH-OpenClawGateway" /TR "%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\start-cofounder.bat" /SC ONLOGON /RL HIGHEST /F`,
+        `schtasks /Create /TN "Cofounder-OpenClawGateway" /TR "%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\start-cofounder.bat" /SC ONLOGON /RL HIGHEST /F`,
         15_000,
       );
       s.stop(pc.green("✓ Startup script + Scheduled Task installed on Windows H2"));

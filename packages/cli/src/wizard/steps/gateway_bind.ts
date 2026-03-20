@@ -73,13 +73,12 @@ export async function stepGatewayBind(ctx: Partial<WizardContext>): Promise<Part
         gateway: {
           bind: thisBindMode,
           // For H2 (tailscale bind), also add H1's IP to trustedProxies
-          ...(thisBindMode === "tailscale" && ctx.peerTailscaleIP
+          ...(thisBindMode === "tailnet" && ctx.peerTailscaleIP
             ? { trustedProxies: ["127.0.0.1", ctx.peerTailscaleIP] }
             : {}),
-          // For H1 (loopback bind), enable tailscale mode off to keep loopback
-          ...(thisBindMode === "loopback"
-            ? { tailscale: { mode: "off" } }
-            : { tailscale: { mode: "on" } }),
+          // tailscale.mode controls Tailscale Serve/Funnel — always off
+          // (we bind directly to the Tailscale IP, not via Serve)
+          tailscale: { mode: "off" },
         },
       };
       await patchLocalOpenClawConfig(bindPatch);
@@ -93,7 +92,7 @@ export async function stepGatewayBind(ctx: Partial<WizardContext>): Promise<Part
   // ── Step 3: For H2 on Windows with tailscale bind ─────────────────────
   //    The local TUI won't work unless we add a loopback→tailscale portproxy.
   //    Discovered during Calcifer/GLaDOS reference setup (2026-03-11).
-  if (thisBindMode === "tailscale" && process.platform === "win32" && ctx.tailscaleIP) {
+  if (thisBindMode === "tailnet" && process.platform === "win32" && ctx.tailscaleIP) {
     const proxyConfig = { tailscaleIP: ctx.tailscaleIP, port: 18789 };
     const alreadyInstalled = await isWindowsLoopbackProxyInstalled(proxyConfig);
 
@@ -145,9 +144,9 @@ export async function stepGatewayBind(ctx: Partial<WizardContext>): Promise<Part
             `$f = "$env:USERPROFILE\\.openclaw\\openclaw.json"`,
             `$j = try { Get-Content $f -Raw | ConvertFrom-Json } catch { [PSCustomObject]@{} }`,
             `if (-not $j.PSObject.Properties['gateway']) { $j | Add-Member -NotePropertyName gateway -NotePropertyValue ([PSCustomObject]@{}) }`,
-            `$j.gateway | Add-Member -NotePropertyName bind -NotePropertyValue 'tailscale' -Force`,
+            `$j.gateway | Add-Member -NotePropertyName bind -NotePropertyValue 'tailnet' -Force`,
             `if (-not $j.gateway.PSObject.Properties['tailscale']) { $j.gateway | Add-Member -NotePropertyName tailscale -NotePropertyValue ([PSCustomObject]@{}) }`,
-            `$j.gateway.tailscale | Add-Member -NotePropertyName mode -NotePropertyValue 'on' -Force`,
+            `$j.gateway.tailscale | Add-Member -NotePropertyName mode -NotePropertyValue 'off' -Force`,
             // Merge trustedProxies — preserve existing, add H1's IP
             `$existing = if ($j.gateway.PSObject.Properties['trustedProxies']) { @($j.gateway.trustedProxies) } else { @('127.0.0.1') }`,
             `$j.gateway | Add-Member -NotePropertyName trustedProxies -NotePropertyValue ($existing + '${tomIP}' | Select-Object -Unique) -Force`,
@@ -160,7 +159,7 @@ export async function stepGatewayBind(ctx: Partial<WizardContext>): Promise<Part
           );
         } else {
           // Linux/macOS — inline Node.js deep-merge
-          const nodeCmd = `node --input-type=module << 'EOF'\nimport {readFileSync,writeFileSync} from 'fs';\nimport {homedir} from 'os';\nimport {join} from 'path';\nconst p=join(homedir(),'.openclaw','openclaw.json');\nlet j={};\ntry{j=JSON.parse(readFileSync(p,'utf8'));}catch{}\nj.gateway=j.gateway||{};\nj.gateway.bind='tailscale';\nj.gateway.tailscale={mode:'on'};\nconst existing=Array.isArray(j.gateway.trustedProxies)?j.gateway.trustedProxies:['127.0.0.1'];\nj.gateway.trustedProxies=[...new Set([...existing,'${ctx.tailscaleIP}'])];\nwriteFileSync(p,JSON.stringify(j,null,2),{mode:0o600});\nEOF`;
+          const nodeCmd = `node --input-type=module << 'EOF'\nimport {readFileSync,writeFileSync} from 'fs';\nimport {homedir} from 'os';\nimport {join} from 'path';\nconst p=join(homedir(),'.openclaw','openclaw.json');\nlet j={};\ntry{j=JSON.parse(readFileSync(p,'utf8'));}catch{}\nj.gateway=j.gateway||{};\nj.gateway.bind='tailnet';\nj.gateway.tailscale={mode:'off'};\nconst existing=Array.isArray(j.gateway.trustedProxies)?j.gateway.trustedProxies:['127.0.0.1'];\nj.gateway.trustedProxies=[...new Set([...existing,'${ctx.tailscaleIP}'])];\nwriteFileSync(p,JSON.stringify(j,null,2),{mode:0o600});\nEOF`;
           await sshExec(
             { host: ctx.peerTailscaleIP, user: ctx.peerSSHUser, keyPath: ctx.peerSSHKeyPath! },
             nodeCmd,
@@ -178,18 +177,18 @@ export async function stepGatewayBind(ctx: Partial<WizardContext>): Promise<Part
           15_000,
         ).catch(() => { /* restart is best-effort */ });
 
-        s.stop(pc.green(`✓ Peer gateway updated and restarted (bind=tailscale, trustedProxies +${ctx.tailscaleIP})`));
+        s.stop(pc.green(`✓ Peer gateway updated and restarted (bind=tailnet, trustedProxies +${ctx.tailscaleIP})`));
       } catch (err) {
         s.stop(pc.yellow("⚠ Could not update peer gateway via SSH — update manually"));
-        p.log.warn("On the H2 machine, set: gateway.bind = 'tailscale', gateway.trustedProxies includes this node's Tailscale IP");
+        p.log.warn("On the H2 machine, set: gateway.bind = 'tailnet', gateway.trustedProxies includes this node's Tailscale IP");
       }
     }
   }
 
   return {
     ...ctx,
-    thisBindMode: thisBindMode as "loopback" | "tailscale" | "lan",
-    peerBindMode: peerBindMode as "loopback" | "tailscale" | "lan",
+    thisBindMode: thisBindMode as "loopback" | "tailnet" | "lan",
+    peerBindMode: peerBindMode as "loopback" | "tailnet" | "lan",
     peerGatewayPort,
   };
 }

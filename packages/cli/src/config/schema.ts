@@ -15,7 +15,7 @@ export const WOLConfig = z.object({
 
 export const GatewayConfig = z.object({
   port: z.number().int().default(18789),
-  bind: z.enum(["tailscale", "loopback", "lan"]).default("tailscale"),
+  bind: z.enum(["tailnet", "loopback", "lan"]).default("tailnet"),
   /** Stored key name in OS keychain (never plaintext token) */
   auth_token_key: z.string().optional(),
   /** Resolved token — populated at runtime from keychain, never written to disk */

@@ -5,8 +5,8 @@
  *   - the wizard is installing on a Windows H2 node (role === "h2", platform === win32), OR
  *   - H1 is doing remote setup via SSH on a Windows H2
  *
- * Creates an inbound TCP allow rule named "HH-Gateway" on the configured
- * gateway port (default: 18790) so H1 can reach the capabilities server
+ * Creates an inbound TCP allow rule named "Cofounder-Gateway" on the configured
+ * gateway port (default: 18789) so H1 can reach the capabilities server
  * and webhook endpoint.
  *
  * On failure (requires elevation), prints the manual netsh command.
@@ -21,7 +21,7 @@ import { isCancelled, type WizardContext } from "../context.ts";
 
 const execFileAsync = promisify(execFile);
 
-const RULE_NAME = "HH-Gateway";
+const RULE_NAME = "Cofounder-Gateway";
 
 /** netsh command to add the inbound rule */
 function buildNetshCmd(port: number): string {
@@ -36,7 +36,7 @@ function buildNetshCmd(port: number): string {
   );
 }
 
-/** Check if the HH-Gateway rule already exists (local) */
+/** Check if the Cofounder-Gateway rule already exists (local) */
 async function ruleExists(): Promise<boolean> {
   try {
     const { stdout } = await execFileAsync("netsh", [
@@ -84,7 +84,7 @@ export async function stepFirewall(ctx: Partial<WizardContext>): Promise<Partial
 
   const gatewayPort: number =
     (ctx as { gatewayPort?: number }).gatewayPort ??
-    18790;
+    18789;
 
   p.log.info(
     `Setting up Windows Firewall rule for gateway port ${pc.cyan(String(gatewayPort))}…`,

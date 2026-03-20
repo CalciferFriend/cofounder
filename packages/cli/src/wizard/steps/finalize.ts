@@ -50,7 +50,7 @@ export async function stepFinalize(ctx: Partial<WizardContext>): Promise<Partial
       gateway_port: ctx.peerGatewayPort ?? 18789,
       gateway: {
         port: ctx.peerGatewayPort ?? 18789,
-        bind: ctx.peerBindMode ?? "tailscale",
+        bind: ctx.peerBindMode ?? "tailnet",
       },
     },
     pair: {

@@ -41,8 +41,8 @@ export interface WizardContext {
   wolPollIntervalSeconds: number;
 
   // Step 7: gateway_bind
-  thisBindMode: "loopback" | "tailscale" | "lan";
-  peerBindMode: "loopback" | "tailscale" | "lan";
+  thisBindMode: "loopback" | "tailnet" | "lan";
+  peerBindMode: "loopback" | "tailnet" | "lan";
   peerGatewayPort: number;
 
   // Step 8: autologin
