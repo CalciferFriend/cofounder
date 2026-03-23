@@ -126,7 +126,7 @@ export async function startResultServer(opts: ResultServerOptions): Promise<Resu
       }
 
       // Token authentication — accept X-HH-Token header or Authorization: Bearer <token>
-      const cfToken = req.headers["x-cofounder-token"];
+      const cfToken = req.headers["x-hh-token"];
       const bearerHeader = req.headers["authorization"];
       const bearerToken = typeof bearerHeader === "string" && bearerHeader.startsWith("Bearer ")
         ? bearerHeader.slice(7)

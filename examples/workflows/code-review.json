@@ -1,0 +1,19 @@
+{
+  "name": "code-review",
+  "description": "Multi-step PR review: fetch diff, analyze code, suggest improvements",
+  "timeout": 300,
+  "steps": [
+    {
+      "peer": "glados",
+      "task": "Run `gh pr diff {{pr_number}}` and save the output for analysis"
+    },
+    {
+      "peer": "glados",
+      "task": "Review this git diff for:\n1. Potential bugs or logic errors\n2. Code style and readability issues\n3. Missing tests or edge cases\n4. Security vulnerabilities\n\nDiff:\n{{previous.output}}"
+    },
+    {
+      "peer": "glados",
+      "task": "Based on this review feedback, generate a constructive PR comment in markdown format:\n\n{{previous.output}}\n\nTone: friendly and helpful, not nitpicky. Focus on high-impact suggestions."
+    }
+  ]
+}

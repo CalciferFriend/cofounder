@@ -1,0 +1,18 @@
+{
+  "steps": [
+    {
+      "peer": "glados",
+      "task": "Search the web for recent news and developments on {{topic}}. Find 5-7 high-quality sources.",
+      "continueOnError": false
+    },
+    {
+      "peer": "glados",
+      "task": "Read and synthesize these sources into a 3-paragraph executive summary. Focus on:\n1. Key developments in the last month\n2. Emerging trends\n3. What it means for practitioners\n\nSources:\n{{previous.output}}"
+    },
+    {
+      "peer": "glados",
+      "task": "Format the summary as a Slack message with markdown formatting. Include source links at the bottom.\n\nSummary to format:\n{{previous.output}}",
+      "continueOnError": false
+    }
+  ]
+}

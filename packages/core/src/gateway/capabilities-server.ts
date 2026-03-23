@@ -87,7 +87,7 @@ export async function startCapabilitiesServer(
       }
 
       // ── All other routes require auth ─────────────────────────────────────
-      const cfToken = req.headers["x-cofounder-token"];
+      const cfToken = req.headers["x-hh-token"];
       const bearerHeader = req.headers["authorization"];
       const bearerToken =
         typeof bearerHeader === "string" && bearerHeader.startsWith("Bearer ")

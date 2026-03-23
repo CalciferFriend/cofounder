@@ -1,0 +1,21 @@
+{
+  "name": "daily-standup",
+  "description": "Morning digest: recent git commits, calendar events, and email summary",
+  "timeout": 120,
+  "steps": [
+    {
+      "peer": "glados",
+      "task": "Run `git log --oneline --since='24 hours ago'` in the main project directory and summarise what changed yesterday",
+      "continueOnError": true
+    },
+    {
+      "peer": "glados",
+      "task": "Check my calendar for today's events (use gog calendar or similar) and list any meetings or deadlines",
+      "continueOnError": true
+    },
+    {
+      "peer": "glados",
+      "task": "Summarise the output from the previous two steps into a clean morning standup format. Format:\n\n# Daily Standup — {{date}}\n\n## Yesterday's commits\n{{steps.0.output}}\n\n## Today's calendar\n{{steps.1.output}}\n\n## Focus for today\n[your suggestion based on commits + calendar]"
+    }
+  ]
+}

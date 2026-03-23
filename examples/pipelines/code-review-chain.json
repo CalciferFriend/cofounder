@@ -1,0 +1,21 @@
+{
+  "steps": [
+    {
+      "peer": "glados",
+      "task": "Fetch the current PR diff using `gh pr diff` and analyze it for potential issues"
+    },
+    {
+      "peer": "glados",
+      "task": "Based on this analysis, identify any auto-fixable issues (formatting, obvious typos, simple refactors):\n\n{{previous.output}}"
+    },
+    {
+      "peer": "glados",
+      "task": "If there are auto-fixable issues, generate a patch file with the corrections. Otherwise, return 'No auto-fixes needed'.\n\nIssues:\n{{previous.output}}",
+      "continueOnError": true
+    },
+    {
+      "peer": "glados",
+      "task": "Write a final PR review comment summarizing:\n1. What was analyzed\n2. What was auto-fixed (if anything)\n3. Any remaining suggestions for the author\n\nAnalysis: {{steps.0.output}}\nAuto-fixes: {{steps.2.output}}"
+    }
+  ]
+}
