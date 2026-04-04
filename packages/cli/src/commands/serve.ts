@@ -114,7 +114,7 @@ function checkAuth(
   noAuth: boolean,
 ): boolean {
   if (noAuth) return true;
-  const header = req.headers["x-cofounder-token"];
+  const header = req.headers["x-hh-token"];
   if (typeof header === "string" && header === token) return true;
   const queryToken = url.searchParams.get("token");
   if (queryToken === token) return true;

@@ -138,7 +138,7 @@ const MULTI_PEER_CONFIG: SDKConfig = {
 
 // ── Import HH after mocks are registered ─────────────────────────────────────
 
-const { HH, createHH } = await import("./index.ts");
+const { Cofounder, createCofounder } = await import("./index.ts");
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
@@ -245,7 +245,7 @@ describe("HH.status()", () => {
     vi.mocked(checkGatewayHealth).mockResolvedValueOnce(true);
 
     const cf = new Cofounder({ config: BASE_CONFIG });
-    const result = await cofounder.status();
+    const result = await cf.status();
     expect(result.online).toBe(true);
     expect(result.gatewayHealthy).toBe(true);
     expect(result.peer.name).toBe("glados");
@@ -256,7 +256,7 @@ describe("HH.status()", () => {
     vi.mocked(pingPeer).mockResolvedValueOnce(false);
 
     const cf = new Cofounder({ config: BASE_CONFIG });
-    const result = await cofounder.status();
+    const result = await cf.status();
     expect(result.online).toBe(false);
     expect(result.gatewayHealthy).toBe(false);
     // Should NOT attempt health check when peer is unreachable
@@ -268,7 +268,7 @@ describe("HH.status()", () => {
     vi.mocked(pingPeer).mockResolvedValueOnce(false);
 
     const cf = new Cofounder({ config: BASE_CONFIG });
-    const result = await cofounder.status();
+    const result = await cf.status();
     expect(result.latencyMs).toBeUndefined();
   });
 
@@ -278,7 +278,7 @@ describe("HH.status()", () => {
     vi.mocked(checkGatewayHealth).mockResolvedValueOnce(true);
 
     const cf = new Cofounder({ config: MULTI_PEER_CONFIG });
-    const result = await cofounder.status({ peer: "jarvis" });
+    const result = await cf.status({ peer: "jarvis" });
     expect(result.peer.name).toBe("jarvis");
     expect(vi.mocked(pingPeer)).toHaveBeenCalledWith("100.5.5.5", 5000);
   });
@@ -287,7 +287,7 @@ describe("HH.status()", () => {
 describe("HH.send() — fire-and-forget", () => {
   it("returns task id and pending status", async () => {
     const cf = new Cofounder({ config: BASE_CONFIG });
-    const result = await cofounder.send("Run benchmark suite");
+    const result = await cf.send("Run benchmark suite");
     expect(result.id).toMatch(/^[0-9a-f-]{36}$/);
     expect(result.peer).toBe("glados");
     expect(result.status).toBe("pending");
@@ -296,7 +296,7 @@ describe("HH.send() — fire-and-forget", () => {
   it("calls wakeAgent with correct ws URL and token", async () => {
     const { wakeAgent } = await import("@cofounder/core");
     const cf = new Cofounder({ config: BASE_CONFIG });
-    await cofounder.send("Do stuff");
+    await cf.send("Do stuff");
     expect(vi.mocked(wakeAgent)).toHaveBeenCalledWith(
       expect.objectContaining({
         url: "ws://100.9.8.7:18789",
@@ -309,7 +309,7 @@ describe("HH.send() — fire-and-forget", () => {
   it("includes task text in the wake message", async () => {
     const { wakeAgent } = await import("@cofounder/core");
     const cf = new Cofounder({ config: BASE_CONFIG });
-    await cofounder.send("Render 4K scene");
+    await cf.send("Render 4K scene");
     const callArgs = vi.mocked(wakeAgent).mock.calls[0][0];
     expect(callArgs.text).toContain("Render 4K scene");
   });
@@ -317,7 +317,7 @@ describe("HH.send() — fire-and-forget", () => {
   it("creates a task state entry locally", async () => {
     const { createTaskState } = await import("./state.ts");
     const cf = new Cofounder({ config: BASE_CONFIG });
-    await cofounder.send("Train LoRA");
+    await cf.send("Train LoRA");
     expect(vi.mocked(createTaskState)).toHaveBeenCalledWith(
       expect.objectContaining({
         from: "calcifer",
@@ -331,7 +331,7 @@ describe("HH.send() — fire-and-forget", () => {
   it("routes to named peer when opts.peer is set", async () => {
     const { wakeAgent } = await import("@cofounder/core");
     const cf = new Cofounder({ config: MULTI_PEER_CONFIG });
-    await cofounder.send("Quick job", { peer: "jarvis" });
+    await cf.send("Quick job", { peer: "jarvis" });
     expect(vi.mocked(wakeAgent)).toHaveBeenCalledWith(
       expect.objectContaining({ url: "ws://100.5.5.5:18790", token: "tok-jarvis" }),
     );
@@ -341,13 +341,13 @@ describe("HH.send() — fire-and-forget", () => {
     const { wakeAgent } = await import("@cofounder/core");
     vi.mocked(wakeAgent).mockResolvedValueOnce({ ok: false, error: "connection refused" });
     const cf = new Cofounder({ config: BASE_CONFIG });
-    await expect(cofounder.send("Task")).rejects.toThrow("connection refused");
+    await expect(cf.send("Task")).rejects.toThrow("connection refused");
   });
 
   it("includes routingHint in wake text when provided", async () => {
     const { wakeAgent } = await import("@cofounder/core");
     const cf = new Cofounder({ config: BASE_CONFIG });
-    await cofounder.send("Heavy job", { routingHint: "gpu" });
+    await cf.send("Heavy job", { routingHint: "gpu" });
     const callArgs = vi.mocked(wakeAgent).mock.calls[0][0];
     expect(callArgs.text).toContain("gpu");
   });
@@ -356,7 +356,7 @@ describe("HH.send() — fire-and-forget", () => {
 describe("HH.send() — wait:true (webhook path)", () => {
   it("returns completed result from webhook payload", async () => {
     const cf = new Cofounder({ config: BASE_CONFIG });
-    const result = await cofounder.send("Run inference", { wait: true });
+    const result = await cf.send("Run inference", { wait: true });
     expect(result.status).toBe("completed");
     expect(result.output).toBe("42");
     expect(result.success).toBe(true);
@@ -367,7 +367,7 @@ describe("HH.send() — wait:true (webhook path)", () => {
   it("includes webhook URL in the wake message", async () => {
     const { wakeAgent } = await import("@cofounder/core");
     const cf = new Cofounder({ config: BASE_CONFIG });
-    await cofounder.send("Task", { wait: true });
+    await cf.send("Task", { wait: true });
     const callArgs = vi.mocked(wakeAgent).mock.calls[0][0];
     expect(callArgs.text).toContain("webhook=http://100.1.2.3:39999/result");
   });
@@ -376,7 +376,7 @@ describe("HH.send() — wait:true (webhook path)", () => {
     const { startStreamServer } = await import("@cofounder/core");
     const cf = new Cofounder({ config: BASE_CONFIG });
     const chunks: string[] = [];
-    await cofounder.send("Task", { wait: true, onChunk: (c) => chunks.push(c) });
+    await cf.send("Task", { wait: true, onChunk: (c) => chunks.push(c) });
     expect(vi.mocked(startStreamServer)).toHaveBeenCalled();
   });
 
@@ -386,7 +386,7 @@ describe("HH.send() — wait:true (webhook path)", () => {
     vi.mocked(startResultServer).mockRejectedValueOnce(new Error("port in use"));
 
     const cf = new Cofounder({ config: BASE_CONFIG });
-    const result = await cofounder.send("Task", { wait: true });
+    const result = await cf.send("Task", { wait: true });
     // Polling fallback should have been used
     expect(vi.mocked(pollTaskCompletion)).toHaveBeenCalled();
     expect(result.status).toBe("completed");
@@ -399,7 +399,7 @@ describe("HH.send() — wait:true (webhook path)", () => {
     vi.mocked(pollTaskCompletion).mockResolvedValueOnce(null);
 
     const cf = new Cofounder({ config: BASE_CONFIG });
-    await expect(cofounder.send("Task", { wait: true, timeoutMs: 100 })).rejects.toThrow("timed out");
+    await expect(cf.send("Task", { wait: true, timeoutMs: 100 })).rejects.toThrow("timed out");
   });
 });
 
@@ -412,8 +412,8 @@ describe("HH.tasks()", () => {
 
   it("returns tasks after sends", async () => {
     const cf = new Cofounder({ config: BASE_CONFIG });
-    await cofounder.send("Task A");
-    await cofounder.send("Task B");
+    await cf.send("Task A");
+    await cf.send("Task B");
     const tasks = await cf.tasks();
     expect(tasks).toHaveLength(2);
     const objectives = tasks.map((t) => t.objective);

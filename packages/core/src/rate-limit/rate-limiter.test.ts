@@ -304,6 +304,7 @@ describe("RateLimiter", () => {
     });
 
     it("handles very high limits", () => {
+      vi.useFakeTimers();
       const limiter = new RateLimiter({ maxRequests: 10000, windowMs: 1000 });
 
       for (let i = 0; i < 10000; i++) {
@@ -315,6 +316,7 @@ describe("RateLimiter", () => {
       expect(r.allowed).toBe(false);
 
       limiter.destroy();
+      vi.useRealTimers();
     });
 
     it("handles empty identity string", () => {
