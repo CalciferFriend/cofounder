@@ -1,0 +1,31 @@
+{
+  "name": "image-generation",
+  "description": "Batch image generation with quality check",
+  "steps": [
+    {
+      "task": "Generate 5 variations of: {{prompt}}",
+      "peer": "auto",
+      "capabilities": ["image_generation"],
+      "output": "images"
+    },
+    {
+      "task": "Review generated images for quality, diversity, and adherence to prompt. Return JSON with ratings and best pick.",
+      "peer": "auto",
+      "capabilities": ["vision"],
+      "input": "images",
+      "output": "review"
+    },
+    {
+      "task": "Upload best image to storage and return URL",
+      "peer": "auto",
+      "capabilities": ["storage"],
+      "input": "review.best_image",
+      "output": "url"
+    }
+  ],
+  "variables": {
+    "prompt": "A serene mountain landscape at sunset, photorealistic, 4K"
+  },
+  "on_failure": "notify",
+  "tags": ["creative", "image", "batch"]
+}

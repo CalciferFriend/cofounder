@@ -1,0 +1,44 @@
+{
+  "pipeline": "video-render",
+  "description": "Batch video render with progress notifications",
+  "tasks": [
+    {
+      "id": "prepare",
+      "task": "Prepare video render config from script: {{script_path}}",
+      "peer": "auto",
+      "outputs": ["render_config"]
+    },
+    {
+      "id": "render",
+      "task": "Render video using config. Stream progress updates every 10 seconds.",
+      "peer": "auto",
+      "capabilities": ["video_rendering"],
+      "inputs": ["prepare.render_config"],
+      "streaming": true,
+      "timeout": 3600000
+    },
+    {
+      "id": "quality_check",
+      "task": "Validate rendered video: check resolution, framerate, audio sync, artifacts",
+      "peer": "auto",
+      "capabilities": ["vision", "audio_analysis"],
+      "inputs": ["render.output_path"],
+      "outputs": ["quality_report"]
+    },
+    {
+      "id": "notify",
+      "task": "Send notification with quality report and download link",
+      "peer": "auto",
+      "inputs": ["quality_check.quality_report", "render.output_path"],
+      "condition": "quality_check.status === 'passed'"
+    }
+  ],
+  "variables": {
+    "script_path": "./scripts/episode-01.json"
+  },
+  "on_failure": "rollback",
+  "notifications": {
+    "on_complete": ["slack:@user", "email:user@example.com"],
+    "on_failure": ["slack:#alerts"]
+  }
+}

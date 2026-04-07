@@ -1,0 +1,42 @@
+{
+  "name": "data-pipeline",
+  "description": "ETL workflow: fetch → clean → transform → upload",
+  "steps": [
+    {
+      "task": "Fetch latest sales data from API endpoint: {{source_url}}",
+      "peer": "auto",
+      "output": "raw_data"
+    },
+    {
+      "task": "Clean the data: remove duplicates, handle missing values, validate schema",
+      "peer": "auto",
+      "input": "raw_data",
+      "output": "cleaned_data"
+    },
+    {
+      "task": "Transform data: aggregate by region, calculate metrics, format for warehouse",
+      "peer": "auto",
+      "input": "cleaned_data",
+      "output": "transformed_data"
+    },
+    {
+      "task": "Upload transformed data to warehouse and return confirmation",
+      "peer": "auto",
+      "capabilities": ["database"],
+      "input": "transformed_data",
+      "output": "upload_result"
+    },
+    {
+      "task": "Generate summary report and send to Slack #data-alerts",
+      "peer": "auto",
+      "input": "upload_result",
+      "output": "notification"
+    }
+  ],
+  "variables": {
+    "source_url": "https://api.example.com/sales/latest"
+  },
+  "schedule": "0 6 * * *",
+  "on_failure": "retry_3x",
+  "tags": ["etl", "data", "automated"]
+}
