@@ -71,10 +71,10 @@ function makeMockState(id: string, from: string, to: string, objective: string) 
     to,
     objective,
     constraints: [],
-    status: "pending" as const,
+    status: "pending" as string,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-    result: null,
+    result: null as Record<string, unknown> | null,
   };
 }
 

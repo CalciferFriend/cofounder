@@ -83,6 +83,8 @@ export interface SendResult {
   status: "pending" | "completed" | "failed" | "timeout" | "cancelled";
   /** Task output text. Only set when status is "completed". */
   output?: string;
+  /** Whether the task succeeded. Only set when waited. */
+  success?: boolean;
   /** Error string if the task failed. */
   error?: string;
   /** Token usage reported by the peer. */
