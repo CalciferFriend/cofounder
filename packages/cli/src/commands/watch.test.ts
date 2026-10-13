@@ -9,14 +9,16 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ─── Hoist mock fns so they're available before module evaluation ────────────
 
-const { mockListTaskStates, mockUpdateTaskState } = vi.hoisted(() => ({
+const { mockListTaskStates, mockUpdateTaskState, mockLoadTaskState } = vi.hoisted(() => ({
   mockListTaskStates: vi.fn(),
   mockUpdateTaskState: vi.fn(),
+  mockLoadTaskState: vi.fn(),
 }));
 
 vi.mock("../state/tasks.ts", () => ({
   listTaskStates: mockListTaskStates,
   updateTaskState: mockUpdateTaskState,
+  loadTaskState: mockLoadTaskState,
 }));
 
 // Suppress clack output in tests
@@ -154,6 +156,12 @@ describe("cofounder watch — with executor", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUpdateTaskState.mockResolvedValue({});
+    // Mock loadTaskState to return the task with result populated (for cost_usd extraction)
+    mockLoadTaskState.mockImplementation(async (id: string) => {
+      const call = mockUpdateTaskState.mock.calls.find((c) => c[0] === id);
+      if (!call) return makeTask({ id });
+      return makeTask({ id, ...call[1] });
+    });
   });
 
   it("marks task running then completed on success", async () => {

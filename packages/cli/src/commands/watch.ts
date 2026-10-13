@@ -63,7 +63,7 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 import { spawn } from "node:child_process";
-import { listTaskStates, updateTaskState, type TaskState } from "../state/tasks.ts";
+import { listTaskStates, updateTaskState, loadTaskState, type TaskState } from "../state/tasks.ts";
 import {
   startCapabilitiesServer,
   type CapabilitiesServerHandle,
@@ -256,13 +256,17 @@ async function poll(opts: WatchOptions): Promise<number> {
         },
       });
 
+      // Reload task state to get any computed cost_usd (e.g., from cofounder result --tokens)
+      const updatedTask = await loadTaskState(task.id);
+      const cost_usd = updatedTask?.result?.cost_usd ?? 0;
+
       // Phase 10b: Write audit entry for task_completed
       await appendAuditEntry("task_completed", {
         peer: task.from,
         task_id: task.id,
         objective: task.objective,
         status: success ? "completed" : "failed",
-        cost_usd: 0, // TODO: extract from result if available
+        cost_usd,
       }).catch(() => {
         // Soft fail — audit entry is best-effort
       });
